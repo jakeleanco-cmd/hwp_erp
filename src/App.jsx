@@ -101,17 +101,36 @@ function App() {
                   </Button>
                 }
               >
-                <div className="grid gap-4">
+                <div className="space-y-4">
                   {questions.map((q) => (
-                    <div key={q.id} className="p-4 bg-gray-50 rounded border flex justify-between items-center">
-                      <div>
+                    <div key={q.id} className="p-4 bg-gray-50 rounded border flex flex-col gap-2">
+                      <div className="flex justify-between items-center">
                         <Tag color="orange">문제 {q.id}</Tag>
-                        <Text>{q.text}</Text>
+                        <Tag color={q.difficulty === '하' ? 'green' : 'volcano'}>{q.difficulty}</Tag>
                       </div>
-                      <Tag color={q.difficulty === '하' ? 'green' : 'volcano'}>{q.difficulty}</Tag>
+                      <div className="text-gray-800" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8' }}>
+                        {/* 텍스트 렌더링 및 이미지 태그 처리 */}
+                        {q.text.split(/(\[IMAGE_\d+\])/).map((part, index) => {
+                          const imgMatch = part.match(/\[IMAGE_(\d+)\]/);
+                          if (imgMatch) {
+                            const imgNum = imgMatch[1];
+                            return (
+                              <div key={index} className="my-4 text-center">
+                                <img 
+                                  src={`/extracted_images/image${imgNum}.png`} 
+                                  alt={`그림 ${imgNum}`} 
+                                  style={{ maxWidth: '100%', borderRadius: '4px', border: '1px solid #eee' }} 
+                                />
+                              </div>
+                            );
+                          }
+                          return <span key={index}>{part}</span>;
+                        })}
+                      </div>
                     </div>
                   ))}
                 </div>
+
               </Card>
             )}
 

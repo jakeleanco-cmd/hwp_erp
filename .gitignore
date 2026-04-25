@@ -36,4 +36,6 @@ dist-electron
 out
 .venv
 __pycache__
+public/extracted_images/
+temp/
 

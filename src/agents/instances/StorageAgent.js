@@ -7,7 +7,8 @@ import axios from 'axios';
 export class StorageAgent extends BaseAgent {
   constructor() {
     super('agent-storage', 'Storage');
-    this.apiBase = 'http://localhost:5000/api';
+    // .env 설정에 맞춰 서버 포트를 3001로 수정
+    this.apiBase = 'http://localhost:3001/api';
   }
 
   /**
