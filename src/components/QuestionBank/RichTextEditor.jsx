@@ -39,7 +39,10 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           if (data.success) {
             const quill = quillRef.current.getEditor();
             const range = quill.getSelection();
-            quill.insertEmbed(range.index, 'image', data.link);
+            const index = range ? range.index : quill.getLength();
+            quill.insertEmbed(index, 'image', data.link);
+            // 삽입 후 포커스 유지
+            quill.setSelection(index + 1);
           }
         } catch (error) {
           console.error('이미지 업로드 오류:', error);
