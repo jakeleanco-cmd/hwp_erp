@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Button, Card, Input, Space, Typography, Tag, Divider, message } from 'antd';
+import { Layout, Menu, Button, Card, Input, Space, Typography, Tag, Divider, message, Dropdown } from 'antd';
 import { 
   FileTextOutlined, 
   FunctionOutlined, 
   DatabaseOutlined, 
   SettingOutlined,
-  CloudUploadOutlined
+  CloudUploadOutlined,
+  LogoutOutlined,
+  UserOutlined
 } from '@ant-design/icons';
+import { Routes, Route, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { MathAgent } from './agents/instances/MathAgent';
 import { HwpParserAgent } from './agents/instances/HwpParserAgent';
 import { StorageAgent } from './agents/instances/StorageAgent';
@@ -14,20 +18,32 @@ import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
 import QuestionBankManager from './components/QuestionBank/QuestionBankManager';
 import GoogleDriveSettings from './components/Settings/GoogleDriveSettings';
+import LoginPage from './pages/LoginPage';
+import PrivateRoute from './components/auth/PrivateRoute';
+import { useAuthStore } from './store/authStore';
 
 const { Header, Content, Sider } = Layout;
 const { Title, Text } = Typography;
 
-function App() {
+function MainLayout() {
   const [selectedKey, setSelectedKey] = useState('1');
   const [inputText, setInputText] = useState('분수(x+1, y-2) + 분수(3, 4) = 10');
   const [result, setResult] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  const navigate = useNavigate();
+  const { admin, logout } = useAuthStore();
 
   const mathAgent = new MathAgent();
   const parserAgent = new HwpParserAgent();
   const storageAgent = new StorageAgent();
+
+  const handleLogout = () => {
+    logout();
+    message.success('로그아웃되었습니다.');
+    navigate('/login');
+  };
 
   const handleProcess = async () => {
     const output = await mathAgent.execute(inputText);
@@ -50,14 +66,10 @@ function App() {
           
           if (uploadRes.data.success) {
             const driveImages = uploadRes.data.images;
-            // 문제 텍스트 내의 로컬 이미지 경로를 구글 드라이브 링크로 치환
             finalQuestions = finalQuestions.map(q => {
               let updatedText = q.text;
               driveImages.forEach(img => {
-                // [IMAGE_0] 형태의 태그를 찾아서 구글 드라이브 링크로 교체하거나 
-                // 렌더링 시 처리할 수 있도록 속성 추가
-                const imgTag = `[${img.originalName.replace('.png', '').toUpperCase()}]`; // [IMAGE0]
-                // 렌더링을 위해 데이터를 보강
+                const imgTag = `[${img.originalName.replace('.png', '').toUpperCase()}]`;
                 if (updatedText.includes(imgTag)) {
                   q.driveUrl = img.link;
                 }
@@ -95,7 +107,6 @@ function App() {
     setLoading(false);
   };
 
-  // 메뉴 선택에 따른 컨텐츠 렌더링
   const renderContent = () => {
     switch (selectedKey) {
       case '1':
@@ -243,16 +254,35 @@ function App() {
       <Layout>
         <Header style={{ background: '#fff', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Text strong>수학 문제 은행 관리 시스템 v1.0</Text>
-          {selectedKey === '1' && (
-            <Button 
-              type="primary" 
-              icon={<CloudUploadOutlined />} 
-              onClick={handleImportHwp}
-              loading={loading}
+          <Space size="large">
+            {selectedKey === '1' && (
+              <Button 
+                type="primary" 
+                icon={<CloudUploadOutlined />} 
+                onClick={handleImportHwp}
+                loading={loading}
+              >
+                새 HWP 파일 가져오기
+              </Button>
+            )}
+            
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: 'logout',
+                    label: '로그아웃',
+                    icon: <LogoutOutlined />,
+                    onClick: handleLogout,
+                  },
+                ],
+              }}
             >
-              새 HWP 파일 가져오기
-            </Button>
-          )}
+              <Button type="text" icon={<UserOutlined />}>
+                {admin?.name || '관리자'} 님
+              </Button>
+            </Dropdown>
+          </Space>
         </Header>
         
         <Content className="p-8" style={{ overflowY: 'auto' }}>
@@ -278,6 +308,22 @@ function App() {
         </Content>
       </Layout>
     </Layout>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route 
+        path="/*" 
+        element={
+          <PrivateRoute>
+            <MainLayout />
+          </PrivateRoute>
+        } 
+      />
+    </Routes>
   );
 }
 

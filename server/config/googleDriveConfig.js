@@ -13,11 +13,11 @@ const TOKEN_PATH = path.join(__dirname, '../../.keys/tokens.json');
  */
 const getOAuth2Client = () => {
   let credentials;
-  
+
   // 1. 환경 변수에서 먼저 확인 (Vercel 배포 시 사용)
   if (process.env.GOOGLE_CREDENTIALS) {
     credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-  } 
+  }
   // 2. 환경 변수가 없으면 로컬 파일에서 확인
   else if (fs.existsSync(KEY_PATH)) {
     const content = fs.readFileSync(KEY_PATH, 'utf8');
@@ -112,7 +112,7 @@ const getOrCreateAppFolder = async (folderName = 'HWP_ERP_Images') => {
       resource: fileMetadata,
       fields: 'id',
     });
-    
+
     console.log(`📁 Created new folder in Google Drive: ${folderName} (${folder.data.id})`);
     appFolderId = folder.data.id;
     return appFolderId;
@@ -130,10 +130,10 @@ const getOrCreateAppFolder = async (folderName = 'HWP_ERP_Images') => {
  */
 const uploadFile = async (filePath, fileName, folderId = null) => {
   const drive = getDriveService();
-  
+
   // 폴더 ID가 지정되지 않은 경우 전용 폴더 사용
   const targetFolderId = folderId || await getOrCreateAppFolder();
-  
+
   const fileMetadata = {
     name: fileName,
     parents: [targetFolderId]

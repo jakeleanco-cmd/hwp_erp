@@ -7,6 +7,8 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const Question = require('./models/Question');
 const Exam = require('./models/Exam');
 const googleDriveRoutes = require('./routes/googleDriveRoutes');
+const authRoutes = require('./routes/auth.js');
+const { requireAuth } = require('./middleware/auth');
 const { deleteFile } = require('./config/googleDriveConfig');
 
 const app = express();
@@ -23,11 +25,14 @@ mongoose.connect(MONGODB_URI)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
+// Routes - Auth
+app.use('/api/auth', authRoutes);
+
 // Routes - Google Drive Auth
 app.use('/api/google-drive', googleDriveRoutes);
 
 // Routes - Questions
-app.get('/api/questions', async (req, res) => {
+app.get('/api/questions', requireAuth, async (req, res) => {
   try {
     const questions = await Question.find().sort({ createdAt: -1 });
     res.json(questions);
@@ -36,7 +41,7 @@ app.get('/api/questions', async (req, res) => {
   }
 });
 
-app.post('/api/questions/batch', async (req, res) => {
+app.post('/api/questions/batch', requireAuth, async (req, res) => {
   try {
     const { questions } = req.body;
     const result = await Question.insertMany(questions);
@@ -47,7 +52,7 @@ app.post('/api/questions/batch', async (req, res) => {
 });
 
 // Routes - Exams
-app.get('/api/exams', async (req, res) => {
+app.get('/api/exams', requireAuth, async (req, res) => {
   try {
     const exams = await Exam.find().sort({ createdAt: -1 });
     res.json(exams);
@@ -56,7 +61,7 @@ app.get('/api/exams', async (req, res) => {
   }
 });
 
-app.get('/api/exams/:id', async (req, res) => {
+app.get('/api/exams/:id', requireAuth, async (req, res) => {
   try {
     const exam = await Exam.findById(req.params.id);
     if (!exam) return res.status(404).json({ error: 'Exam not found' });
@@ -66,7 +71,7 @@ app.get('/api/exams/:id', async (req, res) => {
   }
 });
 
-app.post('/api/exams', async (req, res) => {
+app.post('/api/exams', requireAuth, async (req, res) => {
   try {
     const newExam = new Exam(req.body);
     await newExam.save();
@@ -76,7 +81,7 @@ app.post('/api/exams', async (req, res) => {
   }
 });
 
-app.put('/api/exams/:id', async (req, res) => {
+app.put('/api/exams/:id', requireAuth, async (req, res) => {
   try {
     const updatedExam = await Exam.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' });
     res.json(updatedExam);
@@ -85,7 +90,7 @@ app.put('/api/exams/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/exams/:id', async (req, res) => {
+app.delete('/api/exams/:id', requireAuth, async (req, res) => {
   try {
     const exam = await Exam.findById(req.params.id);
     if (exam) {
