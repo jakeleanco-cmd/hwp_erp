@@ -34,6 +34,7 @@ server/node_modules
 dist
 dist-electron
 out
+.keys/
 .venv
 __pycache__
 public/extracted_images/

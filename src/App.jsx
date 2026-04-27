@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Button, Card, Input, Space, Typography, Tag, Divider } from 'antd';
+import { Layout, Menu, Button, Card, Input, Space, Typography, Tag, Divider, message } from 'antd';
 import { 
   FileTextOutlined, 
   FunctionOutlined, 
@@ -11,13 +11,15 @@ import { MathAgent } from './agents/instances/MathAgent';
 import { HwpParserAgent } from './agents/instances/HwpParserAgent';
 import { StorageAgent } from './agents/instances/StorageAgent';
 import 'katex/dist/katex.min.css';
-import { InlineMath, BlockMath } from 'react-katex';
-import { message } from 'antd';
+import { BlockMath } from 'react-katex';
+import QuestionBankManager from './components/QuestionBank/QuestionBankManager';
+import GoogleDriveSettings from './components/Settings/GoogleDriveSettings';
 
 const { Header, Content, Sider } = Layout;
 const { Title, Text } = Typography;
 
 function App() {
+  const [selectedKey, setSelectedKey] = useState('1');
   const [inputText, setInputText] = useState('분수(x+1, y-2) + 분수(3, 4) = 10');
   const [result, setResult] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -34,12 +36,45 @@ function App() {
 
   const handleImportHwp = async () => {
     setLoading(true);
-    const output = await parserAgent.execute();
-    if (output.success) {
-      setQuestions(output.questions);
-      message.success(`${output.questions.length}개의 문제를 가져왔습니다.`);
-    } else {
-      message.error(output.error);
+    try {
+      const output = await parserAgent.execute();
+      if (output.success) {
+        let finalQuestions = output.questions;
+        
+        // 구글 드라이브 인증 상태 확인
+        const statusRes = await axios.get('/api/google-drive/status');
+        
+        if (statusRes.data.authenticated) {
+          message.loading({ content: '이미지를 구글 드라이브에 업로드 중...', key: 'upload' });
+          const uploadRes = await axios.post('/api/google-drive/upload-images');
+          
+          if (uploadRes.data.success) {
+            const driveImages = uploadRes.data.images;
+            // 문제 텍스트 내의 로컬 이미지 경로를 구글 드라이브 링크로 치환
+            finalQuestions = finalQuestions.map(q => {
+              let updatedText = q.text;
+              driveImages.forEach(img => {
+                // [IMAGE_0] 형태의 태그를 찾아서 구글 드라이브 링크로 교체하거나 
+                // 렌더링 시 처리할 수 있도록 속성 추가
+                const imgTag = `[${img.originalName.replace('.png', '').toUpperCase()}]`; // [IMAGE0]
+                // 렌더링을 위해 데이터를 보강
+                if (updatedText.includes(imgTag)) {
+                  q.driveUrl = img.link;
+                }
+              });
+              return q;
+            });
+            message.success({ content: '구글 드라이브 업로드 완료!', key: 'upload' });
+          }
+        }
+
+        setQuestions(finalQuestions);
+        message.success(`${finalQuestions.length}개의 문제를 가져왔습니다.`);
+      } else {
+        message.error(output.error);
+      }
+    } catch (err) {
+      message.error("처리 중 오류 발생: " + err.message);
     }
     setLoading(false);
   };
@@ -53,43 +88,18 @@ function App() {
     const output = await storageAgent.execute('save', questions);
     if (output.success) {
       message.success(`${output.count}개의 문제가 DB에 저장되었습니다.`);
-      setQuestions([]); // 저장 후 목록 비우기
+      setQuestions([]); 
     } else {
       message.error("저장 실패: " + output.error);
     }
     setLoading(false);
   };
 
-  return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Sider theme="light" width={240} style={{ borderRight: '1px solid #f0f0f0' }}>
-        <div className="p-6 text-center">
-          <Title level={4} style={{ color: '#1890ff', margin: 0 }}>HWP Math ERP</Title>
-          <Text type="secondary" size="small">시니어 개발자 모드</Text>
-        </div>
-        <Menu mode="inline" defaultSelectedKeys={['1']}>
-          <Menu.Item key="1" icon={<FileTextOutlined />}>문제 가져오기 (HWP)</Menu.Item>
-          <Menu.Item key="2" icon={<FunctionOutlined />}>수식 편집기</Menu.Item>
-          <Menu.Item key="3" icon={<DatabaseOutlined />}>문제 은행 관리</Menu.Item>
-          <Divider />
-          <Menu.Item key="4" icon={<SettingOutlined />}>시스템 설정</Menu.Item>
-        </Menu>
-      </Sider>
-      
-      <Layout>
-        <Header style={{ background: '#fff', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text strong>수학 문제 은행 관리 시스템 v1.0</Text>
-          <Button 
-            type="primary" 
-            icon={<CloudUploadOutlined />} 
-            onClick={handleImportHwp}
-            loading={loading}
-          >
-            새 HWP 파일 가져오기
-          </Button>
-        </Header>
-        
-        <Content className="p-8">
+  // 메뉴 선택에 따른 컨텐츠 렌더링
+  const renderContent = () => {
+    switch (selectedKey) {
+      case '1':
+        return (
           <div className="max-w-4xl mx-auto">
             {questions.length > 0 && (
               <Card 
@@ -109,7 +119,6 @@ function App() {
                         <Tag color={q.difficulty === '하' ? 'green' : 'volcano'}>{q.difficulty}</Tag>
                       </div>
                       <div className="text-gray-800" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8' }}>
-                        {/* 텍스트 렌더링 및 이미지 태그 처리 */}
                         {q.text.split(/(\[IMAGE_\d+\])/).map((part, index) => {
                           const imgMatch = part.match(/\[IMAGE_(\d+)\]/);
                           if (imgMatch) {
@@ -117,7 +126,7 @@ function App() {
                             return (
                               <div key={index} className="my-4 text-center">
                                 <img 
-                                  src={`/extracted_images/image${imgNum}.png`} 
+                                  src={q.driveUrl || `/extracted_images/image${imgNum}.png`} 
                                   alt={`그림 ${imgNum}`} 
                                   style={{ maxWidth: '100%', borderRadius: '4px', border: '1px solid #eee' }} 
                                 />
@@ -130,10 +139,14 @@ function App() {
                     </div>
                   ))}
                 </div>
-
               </Card>
             )}
-
+            <EmptyState title="HWP 파일에서 문제를 가져오려면 상단의 버튼을 클릭하세요." />
+          </div>
+        );
+      case '2':
+        return (
+          <div className="max-w-4xl mx-auto">
             <Card title="에이전트 테스트 (Math Agent)" className="shadow-md mb-6">
               <Space direction="vertical" className="w-full" size="large">
                 <div>
@@ -166,21 +179,83 @@ function App() {
                 )}
               </Space>
             </Card>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Card size="small" title="현재 활성 에이전트">
-                <ul className="list-disc pl-5 text-sm text-gray-600">
-                  <li>HwpParserAgent (대기 중)</li>
-                  <li>MathAgent (활성)</li>
-                  <li>StorageAgent (연결됨)</li>
-                </ul>
-              </Card>
-              <Card size="small" title="시스템 상태">
-                <Text type="success">● Electron Main Process 연결됨</Text><br/>
-                <Text type="success">● MongoDB Atlas 연결됨</Text>
-              </Card>
-            </div>
           </div>
+        );
+      case '3':
+        return <QuestionBankManager />;
+      case '4':
+        return (
+          <div className="max-w-4xl mx-auto">
+            <GoogleDriveSettings />
+          </div>
+        );
+      default:
+        return <div>준비 중인 기능입니다.</div>;
+    }
+  };
+
+  const EmptyState = ({ title }) => (
+    <div className="text-center py-20 bg-white rounded-lg border border-dashed border-gray-300">
+      <FileTextOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />
+      <div className="mt-4 text-gray-500">{title}</div>
+    </div>
+  );
+
+  return (
+    <Layout style={{ minHeight: '100vh' }}>
+      <Sider theme="light" width={240} style={{ borderRight: '1px solid #f0f0f0' }}>
+        <div className="p-6 text-center">
+          <Title level={4} style={{ color: '#1890ff', margin: 0 }}>HWP Math ERP</Title>
+          <Text type="secondary" size="small">시니어 개발자 모드</Text>
+        </div>
+        <Menu 
+          mode="inline" 
+          selectedKeys={[selectedKey]} 
+          onClick={({ key }) => setSelectedKey(key)}
+        >
+          <Menu.Item key="1" icon={<FileTextOutlined />}>문제 가져오기 (HWP)</Menu.Item>
+          <Menu.Item key="2" icon={<FunctionOutlined />}>수식 편집기</Menu.Item>
+          <Menu.Item key="3" icon={<DatabaseOutlined />}>문제 은행 관리</Menu.Item>
+          <Divider />
+          <Menu.Item key="4" icon={<SettingOutlined />}>시스템 설정</Menu.Item>
+        </Menu>
+      </Sider>
+      
+      <Layout>
+        <Header style={{ background: '#fff', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text strong>수학 문제 은행 관리 시스템 v1.0</Text>
+          {selectedKey === '1' && (
+            <Button 
+              type="primary" 
+              icon={<CloudUploadOutlined />} 
+              onClick={handleImportHwp}
+              loading={loading}
+            >
+              새 HWP 파일 가져오기
+            </Button>
+          )}
+        </Header>
+        
+        <Content className="p-8" style={{ overflowY: 'auto' }}>
+          {renderContent()}
+          
+          {selectedKey !== '3' && (
+            <div className="max-w-4xl mx-auto mt-8">
+              <div className="grid grid-cols-2 gap-4">
+                <Card size="small" title="현재 활성 에이전트">
+                  <ul className="list-disc pl-5 text-sm text-gray-600">
+                    <li>HwpParserAgent (대기 중)</li>
+                    <li>MathAgent (활성)</li>
+                    <li>StorageAgent (연결됨)</li>
+                  </ul>
+                </Card>
+                <Card size="small" title="시스템 상태">
+                  <Text type="success">● Electron Main Process 연결됨</Text><br/>
+                  <Text type="success">● MongoDB Atlas 연결됨</Text>
+                </Card>
+              </div>
+            </div>
+          )}
         </Content>
       </Layout>
     </Layout>
