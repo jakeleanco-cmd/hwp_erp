@@ -73,7 +73,7 @@ const GoogleDriveSettings = () => {
       }
       className="shadow-md"
     >
-      <Space direction="vertical" className="w-full" size="middle">
+      <Space orientation="vertical" className="w-full" size="middle">
         <div>
           <Text strong>현재 상태: </Text>
           {status.authenticated ? (
@@ -126,7 +126,7 @@ const GoogleDriveSettings = () => {
         okText="인증 완료"
         cancelText="취소"
       >
-        <Space direction="vertical" className="w-full">
+        <Space orientation="vertical" className="w-full">
           <Text>1. 열린 브라우저 창에서 구글 로그인을 진행하세요.</Text>
           <Text>2. 승인 후 나타나는 <b>인증 코드</b>를 복사하여 아래에 입력하세요.</Text>
           <Paragraph type="secondary" style={{ fontSize: '12px' }}>

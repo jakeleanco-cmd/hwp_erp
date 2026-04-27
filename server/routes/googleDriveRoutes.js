@@ -77,7 +77,7 @@ router.post('/upload-images', async (req, res) => {
         driveId: result.id,
         // 드라이브 직접 링크를 이미지 태그에서 사용하려면 webContentLink를 가공하거나 
         // 전용 프록시가 필요할 수 있습니다. 여기서는 ID와 원본 이름을 반환합니다.
-        link: result.webContentLink 
+        link: `https://drive.google.com/uc?id=${result.id}&export=view`
       });
     }
 
@@ -94,6 +94,9 @@ router.post('/upload-images', async (req, res) => {
 router.post('/upload', async (req, res) => {
   try {
     const { image, fileName } = req.body; // base64 image data
+    
+    console.log(`[Upload Request] fileName: ${fileName}, dataLength: ${image?.length || 0}`);
+
     if (!image) return res.status(400).json({ error: '이미지 데이터가 없습니다.' });
 
     // base64 데이터를 임시 파일로 저장
@@ -111,7 +114,8 @@ router.post('/upload', async (req, res) => {
     // 임시 파일 삭제
     fs.unlinkSync(tempFilePath);
 
-    res.json({ success: true, link: result.webContentLink, driveId: result.id });
+    const directLink = `https://drive.google.com/uc?id=${result.id}&export=view`;
+    res.json({ success: true, link: directLink, driveId: result.id });
   } catch (err) {
     console.error('단일 이미지 업로드 실패:', err);
     res.status(500).json({ error: err.message });

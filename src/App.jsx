@@ -212,13 +212,32 @@ function App() {
           mode="inline" 
           selectedKeys={[selectedKey]} 
           onClick={({ key }) => setSelectedKey(key)}
-        >
-          <Menu.Item key="1" icon={<FileTextOutlined />}>문제 가져오기 (HWP)</Menu.Item>
-          <Menu.Item key="2" icon={<FunctionOutlined />}>수식 편집기</Menu.Item>
-          <Menu.Item key="3" icon={<DatabaseOutlined />}>문제 은행 관리</Menu.Item>
-          <Divider />
-          <Menu.Item key="4" icon={<SettingOutlined />}>시스템 설정</Menu.Item>
-        </Menu>
+          items={[
+            {
+              key: '1',
+              icon: <FileTextOutlined />,
+              label: '문제 가져오기 (HWP)',
+            },
+            {
+              key: '2',
+              icon: <FunctionOutlined />,
+              label: '수식 편집기',
+            },
+            {
+              key: '3',
+              icon: <DatabaseOutlined />,
+              label: '문제 은행 관리',
+            },
+            {
+              type: 'divider',
+            },
+            {
+              key: '4',
+              icon: <SettingOutlined />,
+              label: '시스템 설정',
+            },
+          ]}
+        />
       </Sider>
       
       <Layout>

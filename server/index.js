@@ -7,6 +7,7 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const Question = require('./models/Question');
 const Exam = require('./models/Exam');
 const googleDriveRoutes = require('./routes/googleDriveRoutes');
+const { deleteFile } = require('./config/googleDriveConfig');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -86,9 +87,34 @@ app.put('/api/exams/:id', async (req, res) => {
 
 app.delete('/api/exams/:id', async (req, res) => {
   try {
+    const exam = await Exam.findById(req.params.id);
+    if (exam) {
+      // 모든 문항의 내용과 해설에서 구글 드라이브 이미지 ID 추출
+      const fileIds = new Set();
+      const driveIdRegex = /id=([a-zA-Z0-9_-]{25,})/g;
+
+      exam.questions.forEach(q => {
+        // 문제 본문과 해설 합치기
+        const text = (q.content || '') + (q.explanation || '');
+        let match;
+        // regex.exec를 사용하여 모든 매칭되는 ID 수집
+        while ((match = driveIdRegex.exec(text)) !== null) {
+          fileIds.add(match[1]);
+        }
+      });
+
+      // 구글 드라이브 파일 삭제 수행 (비동기 병렬 처리)
+      if (fileIds.size > 0) {
+        console.log(`[Cleanup] 시험지(${req.params.id}) 삭제 시작: 이미지 ${fileIds.size}개 삭제 시도`);
+        // 개별 삭제 오류가 전체 삭제를 막지 않도록 처리
+        await Promise.all(Array.from(fileIds).map(id => deleteFile(id)));
+      }
+    }
+
     await Exam.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
+    res.json({ success: true, message: '시험지 및 관련 이미지가 삭제되었습니다.' });
   } catch (err) {
+    console.error('시험지 삭제 중 오류:', err);
     res.status(500).json({ error: err.message });
   }
 });

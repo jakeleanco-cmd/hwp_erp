@@ -144,7 +144,7 @@ const QuestionBankManager = () => {
       </Card>
 
       {questions.length > 0 ? (
-        <Space direction="vertical" size="large" className="w-full">
+        <Space orientation="vertical" size="large" className="w-full">
           <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-blue-100">
             <div>
               <Title level={4} style={{ margin: 0, color: '#1e293b' }}>{examInfo.examName}</Title>

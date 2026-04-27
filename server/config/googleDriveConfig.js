@@ -167,12 +167,30 @@ const uploadFile = async (filePath, fileName, folderId = null) => {
   }
 };
 
+/**
+ * 구글 드라이브에서 파일을 삭제합니다.
+ * @param {string} fileId - 삭제할 파일 ID
+ */
+const deleteFile = async (fileId) => {
+  const drive = getDriveService();
+  try {
+    await drive.files.delete({
+      fileId: fileId,
+    });
+    console.log(`🗑️ Deleted file from Google Drive: ${fileId}`);
+  } catch (error) {
+    // 파일이 이미 없거나 권한 문제가 있을 수 있으므로 로그만 남김
+    console.warn(`Failed to delete file ${fileId} from Google Drive:`, error.message);
+  }
+};
+
 module.exports = {
   getOAuth2Client,
   getAuthenticatedClient,
   getDriveService,
   getOrCreateAppFolder,
   uploadFile,
+  deleteFile,
   KEY_PATH,
   TOKEN_PATH
 };
