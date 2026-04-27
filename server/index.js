@@ -77,7 +77,7 @@ app.post('/api/exams', async (req, res) => {
 
 app.put('/api/exams/:id', async (req, res) => {
   try {
-    const updatedExam = await Exam.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updatedExam = await Exam.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' });
     res.json(updatedExam);
   } catch (err) {
     res.status(500).json({ error: err.message });
