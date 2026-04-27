@@ -72,7 +72,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
     'header',
     'bold', 'italic', 'underline', 'strike',
     'color', 'background',
-    'list', 'bullet', 'align',
+    'list', 'align',
     'link', 'image', 'formula'
   ];
 

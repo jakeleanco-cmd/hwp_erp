@@ -6,6 +6,7 @@
   "main": "electron/main.js",
   "scripts": {
     "dev": "concurrently \"npm run vite:dev\" \"npm run electron:dev\" \"npm run server:dev\"",
+    "web": "concurrently \"npm run vite:dev\" \"npm run server:dev\"",
     "vite:dev": "vite",
     "electron:dev": "wait-on http://localhost:5173 && electron .",
     "server:dev": "npm --prefix server run dev",

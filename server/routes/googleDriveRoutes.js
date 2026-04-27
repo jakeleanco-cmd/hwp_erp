@@ -39,7 +39,10 @@ router.post('/callback', async (req, res) => {
     res.json({ success: true, message: '인증 성공 및 토큰 저장 완료' });
   } catch (err) {
     console.error('구글 토큰 교환 에러:', err);
-    res.status(500).json({ error: '토큰 교환 중 오류가 발생했습니다.' });
+    res.status(500).json({ 
+      error: '토큰 교환 중 오류가 발생했습니다.',
+      details: err.message
+    });
   }
 });
 

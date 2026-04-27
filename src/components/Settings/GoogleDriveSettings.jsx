@@ -56,7 +56,8 @@ const GoogleDriveSettings = () => {
       setAuthCode('');
       checkStatus();
     } catch (error) {
-      message.error('인증 처리 중 오류가 발생했습니다.');
+      const errorMsg = error.response?.data?.details || error.message;
+      message.error(`인증 처리 중 오류가 발생했습니다: ${errorMsg}`);
     } finally {
       setLoading(false);
     }
@@ -87,29 +88,38 @@ const GoogleDriveSettings = () => {
           .keys 폴더의 클라이언트 정보를 사용하여 인증을 진행합니다.
         </Paragraph>
 
-        {!status.authenticated ? (
+        <Space>
+          {!status.authenticated ? (
+            <Button 
+              type="primary" 
+              icon={<GoogleOutlined />} 
+              onClick={handleStartAuth}
+              loading={loading}
+            >
+              구글 계정 연결하기
+            </Button>
+          ) : (
+            <Button 
+              icon={<GoogleOutlined />} 
+              onClick={handleStartAuth}
+              loading={loading}
+            >
+              계정 다시 연결하기
+            </Button>
+          )}
+          
           <Button 
-            type="primary" 
-            icon={<GoogleOutlined />} 
-            onClick={handleStartAuth}
-            loading={loading}
+            icon={<LinkOutlined />} 
+            onClick={() => setIsModalVisible(true)}
           >
-            구글 계정 연결하기
+            인증 코드 직접 입력
           </Button>
-        ) : (
-          <Button 
-            icon={<GoogleOutlined />} 
-            onClick={handleStartAuth}
-            loading={loading}
-          >
-            계정 다시 연결하기
-          </Button>
-        )}
+        </Space>
       </Space>
 
       <Modal
         title="구글 인증 완료하기"
-        visible={isModalVisible}
+        open={isModalVisible}
         onOk={handleCompleteAuth}
         onCancel={() => setIsModalVisible(false)}
         confirmLoading={loading}

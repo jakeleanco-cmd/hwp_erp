@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 // .keys 폴더 내의 클라이언트 비밀번호 파일 경로 설정
-const KEY_FILE_NAME = 'client_secret_953012340020-u7arhbhumrjlq6j7g7i06iik09bgp9l4.apps.googleusercontent.com.json';
+const KEY_FILE_NAME = 'client_secret_2_953012340020-u7arhbhumrjlq6j7g7i06iik09bgp9l4.apps.googleusercontent.com.json';
 const KEY_PATH = path.join(__dirname, '../../.keys', KEY_FILE_NAME);
 
 const TOKEN_PATH = path.join(__dirname, '../../.keys/tokens.json');
@@ -23,7 +23,7 @@ const getOAuth2Client = () => {
     const content = fs.readFileSync(KEY_PATH, 'utf8');
     credentials = JSON.parse(content);
   } else {
-    throw new Error(`구글 인증 정보(GOOGLE_CREDENTIALS 환경 변수 또는 키 파일)를 찾을 수 없습니다.`);
+    throw new Error(`구글 인증 정보(키 파일)를 찾을 수 없습니다. 경로를 확인하세요: ${KEY_PATH}`);
   }
 
   const { client_id, client_secret, redirect_uris } = credentials.installed || credentials.web;
