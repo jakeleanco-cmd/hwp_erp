@@ -82,6 +82,46 @@ const getDriveService = () => {
   return google.drive({ version: 'v3', auth });
 };
 
+let appFolderId = null;
+
+/**
+ * 앱 전용 폴더를 찾거나 생성합니다.
+ */
+const getOrCreateAppFolder = async (folderName = 'HWP_ERP_Images') => {
+  if (appFolderId) return appFolderId;
+
+  const drive = getDriveService();
+  try {
+    const response = await drive.files.list({
+      q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      fields: 'files(id, name)',
+      spaces: 'drive',
+    });
+
+    if (response.data.files.length > 0) {
+      appFolderId = response.data.files[0].id;
+      return appFolderId;
+    }
+
+    // 폴더가 없으면 생성
+    const fileMetadata = {
+      name: folderName,
+      mimeType: 'application/vnd.google-apps.folder',
+    };
+    const folder = await drive.files.create({
+      resource: fileMetadata,
+      fields: 'id',
+    });
+    
+    console.log(`📁 Created new folder in Google Drive: ${folderName} (${folder.data.id})`);
+    appFolderId = folder.data.id;
+    return appFolderId;
+  } catch (error) {
+    console.error('Error getting/creating folder:', error);
+    throw error;
+  }
+};
+
 /**
  * 파일을 구글 드라이브에 업로드합니다.
  * @param {string} filePath - 업로드할 파일의 로컬 경로
@@ -91,16 +131,16 @@ const getDriveService = () => {
 const uploadFile = async (filePath, fileName, folderId = null) => {
   const drive = getDriveService();
   
+  // 폴더 ID가 지정되지 않은 경우 전용 폴더 사용
+  const targetFolderId = folderId || await getOrCreateAppFolder();
+  
   const fileMetadata = {
     name: fileName,
+    parents: [targetFolderId]
   };
-  
-  if (folderId) {
-    fileMetadata.parents = [folderId];
-  }
 
   const media = {
-    mimeType: 'image/png', // 이미지 위주이므로 png로 설정 (필요시 유동적으로 변경 가능)
+    mimeType: 'image/png',
     body: fs.createReadStream(filePath),
   };
 
@@ -131,6 +171,7 @@ module.exports = {
   getOAuth2Client,
   getAuthenticatedClient,
   getDriveService,
+  getOrCreateAppFolder,
   uploadFile,
   KEY_PATH,
   TOKEN_PATH
