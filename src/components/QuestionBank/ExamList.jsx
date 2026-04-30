@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Space, Card, Typography, message, Popconfirm, Tag } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined, FileTextOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, PlusOutlined, FileTextOutlined, EyeOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
 const { Title } = Typography;
 
-const ExamList = ({ onCreateNew, onEditExam }) => {
+const ExamList = ({ onCreateNew, onEditExam, onViewExam }) => {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -60,6 +60,12 @@ const ExamList = ({ onCreateNew, onEditExam }) => {
       key: 'action',
       render: (_, record) => (
         <Space size="middle">
+          <Button 
+            icon={<EyeOutlined />} 
+            onClick={() => onViewExam(record)}
+          >
+            보기
+          </Button>
           <Button 
             icon={<EditOutlined />} 
             onClick={() => onEditExam(record)}

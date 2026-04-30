@@ -4,6 +4,7 @@ import { PlusOutlined, SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons
 import axios from 'axios';
 import RichTextEditor from './RichTextEditor';
 import ExamList from './ExamList';
+import ExamViewer from './ExamViewer';
 
 const { Title, Text } = Typography;
 
@@ -12,7 +13,7 @@ const { Title, Text } = Typography;
  */
 const QuestionBankManager = () => {
   const [form] = Form.useForm();
-  const [view, setView] = useState('list'); // 'list' | 'create' | 'edit'
+  const [view, setView] = useState('list'); // 'list' | 'create' | 'edit' | 'viewer'
   const [currentExamId, setCurrentExamId] = useState(null);
   const [examInfo, setExamInfo] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -24,6 +25,14 @@ const QuestionBankManager = () => {
     setExamInfo(null);
     setQuestions([]);
     form.resetFields();
+  };
+
+  // 시험지 뷰어 화면으로 이동
+  const handleViewExam = (exam) => {
+    setView('viewer');
+    setCurrentExamId(exam._id);
+    setExamInfo({ examName: exam.examName, questionCount: exam.questionCount });
+    setQuestions(exam.questions);
   };
 
   // 기존 시험지 수정 화면으로 이동
@@ -102,7 +111,16 @@ const QuestionBankManager = () => {
   };
 
   if (view === 'list') {
-    return <ExamList onCreateNew={handleCreateNew} onEditExam={handleEditExam} />;
+    return <ExamList onCreateNew={handleCreateNew} onEditExam={handleEditExam} onViewExam={handleViewExam} />;
+  }
+
+  if (view === 'viewer') {
+    return (
+      <ExamViewer 
+        exam={{ ...examInfo, questions }} 
+        onBack={() => setView('list')} 
+      />
+    );
   }
 
   return (

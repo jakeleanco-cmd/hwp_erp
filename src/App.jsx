@@ -213,8 +213,8 @@ function MainLayout() {
   );
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Sider theme="light" width={240} style={{ borderRight: '1px solid #f0f0f0' }}>
+    <Layout style={{ minHeight: '100vh' }} className="print:bg-white">
+      <Sider theme="light" width={240} className="print:hidden" style={{ borderRight: '1px solid #f0f0f0' }}>
         <div className="p-6 text-center">
           <Title level={4} style={{ color: '#1890ff', margin: 0 }}>HWP Math ERP</Title>
           <Text type="secondary" size="small">시니어 개발자 모드</Text>
@@ -251,8 +251,8 @@ function MainLayout() {
         />
       </Sider>
       
-      <Layout>
-        <Header style={{ background: '#fff', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Layout className="print:bg-white">
+        <Header className="print:hidden" style={{ background: '#fff', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Text strong>수학 문제 은행 관리 시스템 v1.0</Text>
           <Space size="large">
             {selectedKey === '1' && (
@@ -285,7 +285,7 @@ function MainLayout() {
           </Space>
         </Header>
         
-        <Content className="p-8" style={{ overflowY: 'auto' }}>
+        <Content className="p-8 print:p-0 print:m-0 print:bg-white print:overflow-visible" style={{ overflowY: 'auto' }}>
           {renderContent()}
           
           {selectedKey !== '3' && (
