@@ -14,6 +14,11 @@ export const useAuthStore = create(
       /** 인증 정보 설정 */
       setAuth: (token, admin) => set({ token, admin }),
       
+      /** 관리자 정보 업데이트 */
+      updateAdmin: (updatedAdmin) => set((state) => ({ 
+        admin: { ...state.admin, ...updatedAdmin } 
+      })),
+      
       /** 로그아웃 */
       logout: () => set({ token: null, admin: null }),
       

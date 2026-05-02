@@ -25,6 +25,17 @@ import { useAuthStore } from './store/authStore';
 const { Header, Content, Sider } = Layout;
 const { Title, Text } = Typography;
 
+// Axios 인터셉터 설정: 모든 요청에 토큰 포함
+axios.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
+
 function MainLayout() {
   const [selectedKey, setSelectedKey] = useState('1');
   const [inputText, setInputText] = useState('분수(x+1, y-2) + 분수(3, 4) = 10');

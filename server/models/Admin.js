@@ -21,6 +21,15 @@ const adminSchema = new mongoose.Schema(
       type: String, 
       default: '관리자' 
     },
+    examViewerSettings: {
+      type: Object,
+      default: {
+        showAnswers: false,
+        columns: 2,
+        questionSpacing: 50,
+        itemsPerPage: 6
+      }
+    }
   },
   { timestamps: true }
 );

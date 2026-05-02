@@ -71,7 +71,12 @@ router.post('/register-first', async (req, res) => {
     const token = signToken(admin._id.toString());
     return res.status(201).json({
       token,
-      admin: { id: admin._id, email: admin.email, name: admin.name },
+      admin: { 
+        id: admin._id, 
+        email: admin.email, 
+        name: admin.name,
+        examViewerSettings: admin.examViewerSettings 
+      },
     });
   } catch (err) {
     return handleAuthError(res, err, '관리자 등록에 실패했습니다.');
@@ -99,10 +104,75 @@ router.post('/login', async (req, res) => {
     const token = signToken(admin._id.toString());
     return res.json({
       token,
-      admin: { id: admin._id, email: admin.email, name: admin.name },
+      admin: { 
+        id: admin._id, 
+        email: admin.email, 
+        name: admin.name,
+        examViewerSettings: admin.examViewerSettings 
+      },
     });
   } catch (err) {
     return handleAuthError(res, err, '로그인 처리 중 오류가 발생했습니다.');
+  }
+});
+
+/** 아이디 찾기 */
+router.post('/find-id', async (req, res) => {
+  try {
+    const { name, registrationCode } = req.body;
+    const secretCode = process.env.ADMIN_REGISTRATION_CODE;
+    
+    if (!secretCode || registrationCode !== secretCode) {
+      return res.status(403).json({ message: '가입 코드가 올바르지 않습니다.' });
+    }
+    
+    if (!name) {
+      return res.status(400).json({ message: '이름을 입력하세요.' });
+    }
+
+    const admin = await Admin.findOne({ name: String(name).trim() });
+    if (!admin) {
+      return res.status(404).json({ message: '해당 이름으로 등록된 계정을 찾을 수 없습니다.' });
+    }
+
+    return res.json({ email: admin.email });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: '아이디 찾기 중 오류가 발생했습니다.' });
+  }
+});
+
+/** 비밀번호 재설정 */
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, name, newPassword, registrationCode } = req.body;
+    const secretCode = process.env.ADMIN_REGISTRATION_CODE;
+    
+    if (!secretCode || registrationCode !== secretCode) {
+      return res.status(403).json({ message: '가입 코드가 올바르지 않습니다.' });
+    }
+    
+    if (!email || !name || !newPassword) {
+      return res.status(400).json({ message: '이메일, 이름, 새 비밀번호를 모두 입력하세요.' });
+    }
+
+    const admin = await Admin.findOne({ 
+      email: String(email).trim().toLowerCase(),
+      name: String(name).trim() 
+    });
+    
+    if (!admin) {
+      return res.status(404).json({ message: '입력하신 정보와 일치하는 계정을 찾을 수 없습니다.' });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    admin.passwordHash = passwordHash;
+    await admin.save();
+
+    return res.json({ success: true, message: '비밀번호가 성공적으로 변경되었습니다.' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: '비밀번호 재설정 중 오류가 발생했습니다.' });
   }
 });
 
@@ -114,10 +184,48 @@ router.get('/me', requireAuth, async (req, res) => {
       return res.status(404).json({ message: '관리자를 찾을 수 없습니다.' });
     }
     return res.json({
-      admin: { id: admin._id, email: admin.email, name: admin.name },
+      admin: { 
+        id: admin._id, 
+        email: admin.email, 
+        name: admin.name,
+        examViewerSettings: admin.examViewerSettings 
+      },
     });
   } catch (err) {
     return res.status(500).json({ message: '조회에 실패했습니다.' });
+  }
+});
+
+/** 설정 업데이트 */
+router.put('/settings', requireAuth, async (req, res) => {
+  try {
+    const { settings } = req.body;
+    if (!settings) {
+      return res.status(400).json({ message: '설정값이 없습니다.' });
+    }
+
+    const admin = await Admin.findByIdAndUpdate(
+      req.adminId,
+      { examViewerSettings: settings },
+      { returnDocument: 'after' }
+    );
+
+    if (!admin) {
+      return res.status(404).json({ message: '관리자를 찾을 수 없습니다.' });
+    }
+
+    return res.json({
+      success: true,
+      admin: { 
+        id: admin._id, 
+        email: admin.email, 
+        name: admin.name,
+        examViewerSettings: admin.examViewerSettings 
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: '설정 저장 중 오류가 발생했습니다.' });
   }
 });
 
