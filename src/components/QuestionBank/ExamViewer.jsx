@@ -306,8 +306,8 @@ const ExamViewer = ({ exam, onBack }) => {
                     pageBreakInside: 'avoid',
                   }}
                 >
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <div style={{ fontSize: '14pt', fontWeight: 'bold', minWidth: 28 }}>{q.id}.</div>
+                  <div style={{ display: 'flex', gap: 3 }}>
+                    <div style={{ fontSize: '14pt', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{q.id}.</div>
                     <div style={{ flex: 1 }}>
                       <div
                         className="ql-editor"
