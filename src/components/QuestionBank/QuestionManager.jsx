@@ -33,14 +33,16 @@ const QuestionManager = () => {
     }
   };
 
+  // 실시간 검색 (Debounce 적용)
   useEffect(() => {
-    fetchQuestions();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchQuestions(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  const handleSearch = (value) => {
-    const trimmedValue = value ? value.trim() : '';
-    setSearch(trimmedValue);
-    fetchQuestions(trimmedValue);
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
   };
 
   const handleDelete = async (id) => {
@@ -268,13 +270,13 @@ const QuestionManager = () => {
             </Button>
           </Space>
           <Space>
-            <Input.Search
-              placeholder="내용, 태그, 정답, 해설로 검색"
-              onSearch={handleSearch}
+            <Input
+              placeholder="문항 내용, 정답, 해설, 태그 검색"
+              prefix={<SearchOutlined />}
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={handleSearchChange}
               style={{ width: 300 }}
-              enterButton
+              allowClear
             />
             <Button 
               icon={<TagOutlined />} 
