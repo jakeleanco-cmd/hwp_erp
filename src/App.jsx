@@ -7,7 +7,8 @@ import {
   SettingOutlined,
   CloudUploadOutlined,
   LogoutOutlined,
-  UserOutlined
+  UserOutlined,
+  TagOutlined
 } from '@ant-design/icons';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -17,8 +18,10 @@ import { StorageAgent } from './agents/instances/StorageAgent';
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
 import QuestionBankManager from './components/QuestionBank/QuestionBankManager';
+import QuestionManager from './components/QuestionBank/QuestionManager';
 import GoogleDriveSettings from './components/Settings/GoogleDriveSettings';
 import TeacherManager from './components/Settings/TeacherManager';
+import AdminManager from './components/Settings/AdminManager';
 import LoginPage from './pages/LoginPage';
 import PrivateRoute from './components/auth/PrivateRoute';
 import { useAuthStore } from './store/authStore';
@@ -206,10 +209,13 @@ function MainLayout() {
         );
       case '3':
         return <QuestionBankManager />;
+      case '5':
+        return <QuestionManager />;
       case '4':
         return (
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto space-y-6">
             <GoogleDriveSettings />
+            <AdminManager />
             <TeacherManager />
           </div>
         );
@@ -249,11 +255,17 @@ function MainLayout() {
               icon: <FunctionOutlined />,
               label: '수식 편집기',
             },
-            // 3. 문제 은행 관리 (admin 이거나 권한이 있을 때)
+            // 3. 시험지 관리 (admin 이거나 권한이 있을 때)
             (user?.role === 'admin' || user?.permissions?.canManageQuestionBank) && {
               key: '3',
               icon: <DatabaseOutlined />,
-              label: '문제 은행 관리',
+              label: '시험지 관리',
+            },
+            // 5. 문항 관리 (admin 이거나 권한이 있을 때)
+            (user?.role === 'admin' || user?.permissions?.canManageQuestionBank) && {
+              key: '5',
+              icon: <TagOutlined />,
+              label: '문항 관리',
             },
             // 4. 시스템 설정 (admin 전용)
             user?.role === 'admin' && {
@@ -270,7 +282,7 @@ function MainLayout() {
       
       <Layout className="print:bg-white">
         <Header className="print:hidden" style={{ background: '#fff', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text strong>수학 문제 은행 관리 시스템 v1.0</Text>
+          <Text strong>수학 시험지 관리 시스템 v1.0</Text>
           <Space size="large">
             {selectedKey === '1' && (
               <Button 

@@ -45,25 +45,25 @@ router.get('/has-admin', async (req, res) => {
 /** 관리자 가입 (최초 등록 - 가입 코드 필요) */
 router.post('/register-first', async (req, res) => {
   try {
-    const { email, password, name, registrationCode } = req.body;
+    const { adminId, password, name, registrationCode } = req.body;
 
     const secretCode = process.env.ADMIN_REGISTRATION_CODE;
     if (!secretCode || registrationCode !== secretCode) {
       return res.status(403).json({ message: '가입 코드가 올바르지 않거나 서버 설정이 미비합니다.' });
     }
 
-    if (!email || !password) {
-      return res.status(400).json({ message: '이메일과 비밀번호는 필수입니다.' });
+    if (!adminId || !password) {
+      return res.status(400).json({ message: '아이디와 비밀번호는 필수입니다.' });
     }
 
-    const existing = await Admin.findOne({ email: String(email).trim().toLowerCase() });
+    const existing = await Admin.findOne({ adminId: String(adminId).trim() });
     if (existing) {
-      return res.status(400).json({ message: '이미 가입된 이메일입니다.' });
+      return res.status(400).json({ message: '이미 가입된 아이디입니다.' });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
     const admin = await Admin.create({
-      email: String(email).trim().toLowerCase(),
+      adminId: String(adminId).trim(),
       passwordHash,
       name: name || '관리자',
     });
@@ -73,7 +73,7 @@ router.post('/register-first', async (req, res) => {
       token,
       user: { 
         id: admin._id, 
-        email: admin.email, 
+        adminId: admin.adminId, 
         name: admin.name,
         role: 'admin',
         examViewerSettings: admin.examViewerSettings 
@@ -87,19 +87,19 @@ router.post('/register-first', async (req, res) => {
 /** 로그인 */
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ message: '이메일과 비밀번호를 입력하세요.' });
+    const { adminId, password } = req.body;
+    if (!adminId || !password) {
+      return res.status(400).json({ message: '아이디와 비밀번호를 입력하세요.' });
     }
 
-    const admin = await Admin.findOne({ email: String(email).trim().toLowerCase() });
+    const admin = await Admin.findOne({ adminId: String(adminId).trim() });
     if (!admin) {
-      return res.status(401).json({ message: '이메일 또는 비밀번호가 올바르지 않습니다.' });
+      return res.status(401).json({ message: '아이디 또는 비밀번호가 올바르지 않습니다.' });
     }
 
     const ok = await bcrypt.compare(password, admin.passwordHash);
     if (!ok) {
-      return res.status(401).json({ message: '이메일 또는 비밀번호가 올바르지 않습니다.' });
+      return res.status(401).json({ message: '아이디 또는 비밀번호가 올바르지 않습니다.' });
     }
 
     const token = signToken(admin._id.toString());
@@ -107,7 +107,7 @@ router.post('/login', async (req, res) => {
       token,
       user: { 
         id: admin._id, 
-        email: admin.email, 
+        adminId: admin.adminId, 
         name: admin.name,
         role: 'admin',
         examViewerSettings: admin.examViewerSettings 
@@ -174,11 +174,16 @@ router.post('/find-id', async (req, res) => {
     }
 
     const admin = await Admin.findOne({ name: String(name).trim() });
-    if (!admin) {
-      return res.status(404).json({ message: '해당 이름으로 등록된 계정을 찾을 수 없습니다.' });
+    if (admin) {
+      return res.json({ id: admin.adminId, role: '관리자' });
     }
 
-    return res.json({ email: admin.email });
+    const teacher = await Teacher.findOne({ name: String(name).trim() });
+    if (teacher) {
+      return res.json({ id: teacher.teacherId, role: '선생님' });
+    }
+
+    return res.status(404).json({ message: '해당 이름으로 등록된 계정을 찾을 수 없습니다.' });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: '아이디 찾기 중 오류가 발생했습니다.' });
@@ -188,31 +193,44 @@ router.post('/find-id', async (req, res) => {
 /** 비밀번호 재설정 */
 router.post('/reset-password', async (req, res) => {
   try {
-    const { email, name, newPassword, registrationCode } = req.body;
+    const { userId, name, newPassword, registrationCode } = req.body;
     const secretCode = process.env.ADMIN_REGISTRATION_CODE;
     
     if (!secretCode || registrationCode !== secretCode) {
       return res.status(403).json({ message: '가입 코드가 올바르지 않습니다.' });
     }
     
-    if (!email || !name || !newPassword) {
-      return res.status(400).json({ message: '이메일, 이름, 새 비밀번호를 모두 입력하세요.' });
+    if (!userId || !name || !newPassword) {
+      return res.status(400).json({ message: '아이디, 이름, 새 비밀번호를 모두 입력하세요.' });
     }
 
+    // 1. 관리자 먼저 확인
     const admin = await Admin.findOne({ 
-      email: String(email).trim().toLowerCase(),
+      adminId: String(userId).trim(),
       name: String(name).trim() 
     });
     
-    if (!admin) {
-      return res.status(404).json({ message: '입력하신 정보와 일치하는 계정을 찾을 수 없습니다.' });
+    if (admin) {
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+      admin.passwordHash = passwordHash;
+      await admin.save();
+      return res.json({ success: true, message: '관리자 비밀번호가 성공적으로 변경되었습니다.' });
     }
 
-    const passwordHash = await bcrypt.hash(newPassword, 10);
-    admin.passwordHash = passwordHash;
-    await admin.save();
+    // 2. 관리자가 아니면 선생님 확인
+    const teacher = await Teacher.findOne({ 
+      teacherId: String(userId).trim(),
+      name: String(name).trim() 
+    });
 
-    return res.json({ success: true, message: '비밀번호가 성공적으로 변경되었습니다.' });
+    if (teacher) {
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+      teacher.passwordHash = passwordHash;
+      await teacher.save();
+      return res.json({ success: true, message: '선생님 비밀번호가 성공적으로 변경되었습니다.' });
+    }
+
+    return res.status(404).json({ message: '입력하신 정보와 일치하는 계정을 찾을 수 없습니다.' });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: '비밀번호 재설정 중 오류가 발생했습니다.' });
@@ -229,7 +247,7 @@ router.get('/me', requireAuth, async (req, res) => {
     return res.json({
       admin: { 
         id: admin._id, 
-        email: admin.email, 
+        adminId: admin.adminId, 
         name: admin.name,
         examViewerSettings: admin.examViewerSettings 
       },
@@ -261,7 +279,7 @@ router.put('/settings', requireAuth, async (req, res) => {
       success: true,
       admin: { 
         id: admin._id, 
-        email: admin.email, 
+        adminId: admin.adminId, 
         name: admin.name,
         examViewerSettings: admin.examViewerSettings 
       },

@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Input, Button, Form, InputNumber, Space, Typography, Divider, Empty, message, Spin } from 'antd';
-import { PlusOutlined, SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { Card, Input, Button, Form, InputNumber, Space, Typography, Divider, Empty, message, Spin, Modal, Table, Tooltip, Tag } from 'antd';
+import { PlusOutlined, SaveOutlined, ArrowLeftOutlined, SearchOutlined, DownloadOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import RichTextEditor from './RichTextEditor';
 import ExamList from './ExamList';
 import ExamViewer from './ExamViewer';
+import QuestionImportModal from './QuestionImportModal';
+import { GRADES, DIFFICULTIES } from '../../constants';
 
 const { Title, Text } = Typography;
 
 /**
- * 문제 은행 관리 통합 컴포넌트
+ * 시험지 관리 통합 컴포넌트
  */
 const QuestionBankManager = () => {
   const [form] = Form.useForm();
@@ -18,6 +20,10 @@ const QuestionBankManager = () => {
   const [examInfo, setExamInfo] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  // 문항 가져오기 관련 상태
+  const [isImportModalVisible, setIsImportModalVisible] = useState(false);
+  const [importingQuestionId, setImportingQuestionId] = useState(null);
 
   // 새 시험지 작성 화면으로 이동
   const handleCreateNew = () => {
@@ -81,6 +87,27 @@ const QuestionBankManager = () => {
     setQuestions(prev => prev.map(q => 
       q.id === id ? { ...q, [field]: value } : q
     ));
+  };
+
+  // 문항 가져오기 모달 열기
+  const openImportModal = (qId) => {
+    setImportingQuestionId(qId);
+    setIsImportModalVisible(true);
+  };
+
+  // 문항 선택 및 적용
+  const handleSelectQuestion = (selectedQ) => {
+    setQuestions(prev => prev.map(q => 
+      q.id === importingQuestionId ? { 
+        ...q, 
+        content: selectedQ.content, 
+        explanation: selectedQ.explanation, 
+        answer: selectedQ.answer,
+        questionRefId: selectedQ._id 
+      } : q
+    ));
+    setIsImportModalVisible(false);
+    message.success(`문항 ${importingQuestionId}에 선택한 문항이 적용되었습니다.`);
   };
 
   // DB에 저장 (Create or Update)
@@ -183,7 +210,18 @@ const QuestionBankManager = () => {
           {questions.map((q) => (
             <Card 
               key={q.id} 
-              title={<span className="text-blue-600">문항 {q.id}</span>} 
+              title={
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span className="text-blue-600">문항 {q.id}</span>
+                  <Button 
+                    size="small" 
+                    icon={<DownloadOutlined />} 
+                    onClick={() => openImportModal(q.id)}
+                  >
+                    기존 문항 가져오기
+                  </Button>
+                </div>
+              } 
               className="shadow-sm border-gray-200"
             >
               <div className="mb-6">
@@ -204,14 +242,37 @@ const QuestionBankManager = () => {
                 />
               </div>
 
-              <div>
-                <Text strong className="block mb-2">정답</Text>
-                <Input 
-                  value={q.answer} 
-                  onChange={(e) => handleQuestionChange(q.id, 'answer', e.target.value)}
-                  placeholder="정답을 입력하세요" 
-                  size="large"
-                />
+              <div style={{ display: 'flex', gap: '20px' }}>
+                <div style={{ flex: 1 }}>
+                  <Text strong className="block mb-2">정답</Text>
+                  <Input 
+                    value={q.answer} 
+                    onChange={(e) => handleQuestionChange(q.id, 'answer', e.target.value)}
+                    placeholder="정답을 입력하세요" 
+                    size="large"
+                  />
+                </div>
+                <div style={{ width: '120px' }}>
+                  <Text strong className="block mb-2">학년</Text>
+                  <Select
+                    style={{ width: '100%' }}
+                    placeholder="선택"
+                    value={q.grade}
+                    onChange={(val) => handleQuestionChange(q.id, 'grade', val)}
+                    options={GRADES}
+                    size="large"
+                  />
+                </div>
+                <div style={{ width: '100px' }}>
+                  <Text strong className="block mb-2">난이도</Text>
+                  <Select
+                    style={{ width: '100%' }}
+                    value={q.difficulty || '중'}
+                    onChange={(val) => handleQuestionChange(q.id, 'difficulty', val)}
+                    options={DIFFICULTIES}
+                    size="large"
+                  />
+                </div>
               </div>
             </Card>
           ))}
@@ -233,6 +294,13 @@ const QuestionBankManager = () => {
           <Empty description="필드 생성 버튼을 눌러 문항 입력을 시작하세요." />
         </div>
       )}
+
+      {/* 문항 가져오기 모달 */}
+      <QuestionImportModal 
+        visible={isImportModalVisible}
+        onCancel={() => setIsImportModalVisible(false)}
+        onSelect={handleSelectQuestion}
+      />
     </div>
   );
 };

@@ -8,7 +8,8 @@ const ExamSchema = new mongoose.Schema({
       id: Number,
       content: String,
       explanation: String,
-      answer: String
+      answer: String,
+      questionRefId: { type: mongoose.Schema.Types.ObjectId, ref: 'Question' }
     }
   ],
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher', required: false },

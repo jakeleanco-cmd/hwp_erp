@@ -91,7 +91,7 @@ const LoginPage = () => {
     setLoading(true);
     try {
       const res = await axios.post('/api/auth/find-id', values);
-      message.success(`회원님의 아이디(이메일)는 [ ${res.data.email} ] 입니다.`, 5);
+      message.success(`${res.data.role} 계정의 아이디는 [ ${res.data.id} ] 입니다.`, 10);
     } catch (err) {
       message.error(err.response?.data?.message || '아이디 찾기에 실패했습니다.');
     } finally {
@@ -168,8 +168,8 @@ const LoginPage = () => {
               disabled: !hasAdmin,
               children: (
                 <Form onFinish={onLogin} layout="vertical">
-                  <Form.Item name="email" rules={[{ required: true, type: 'email', message: '이메일을 입력하세요.' }]}>
-                    <Input prefix={<UserOutlined />} placeholder="이메일" size="large" />
+                  <Form.Item name="adminId" rules={[{ required: true, message: '아이디를 입력하세요.' }]}>
+                    <Input prefix={<UserOutlined />} placeholder="관리자 아이디" size="large" />
                   </Form.Item>
                   <Form.Item name="password" rules={[{ required: true, message: '비밀번호를 입력하세요.' }]}>
                     <Input.Password prefix={<LockOutlined />} placeholder="비밀번호" size="large" />
@@ -221,8 +221,8 @@ const LoginPage = () => {
                       label: '비밀번호 재설정',
                       children: (
                         <Form onFinish={onResetPassword} layout="vertical" style={{ marginTop: 12 }}>
-                          <Form.Item name="email" rules={[{ required: true, type: 'email', message: '이메일을 입력하세요.' }]}>
-                            <Input prefix={<UserOutlined />} placeholder="등록된 이메일" size="large" />
+                          <Form.Item name="userId" rules={[{ required: true, message: '아이디를 입력하세요.' }]}>
+                            <Input prefix={<UserOutlined />} placeholder="등록된 아이디" size="large" />
                           </Form.Item>
                           <Form.Item name="name" rules={[{ required: true, message: '이름을 입력하세요.' }]}>
                             <Input placeholder="등록된 이름" size="large" />
@@ -257,8 +257,8 @@ const LoginPage = () => {
                   <Form.Item name="name" rules={[{ required: true, message: '이름을 입력하세요.' }]}>
                     <Input placeholder="관리자 이름" size="large" />
                   </Form.Item>
-                  <Form.Item name="email" rules={[{ required: true, type: 'email', message: '이메일을 입력하세요.' }]}>
-                    <Input prefix={<UserOutlined />} placeholder="이메일" size="large" />
+                  <Form.Item name="adminId" rules={[{ required: true, message: '아이디를 입력하세요.' }]}>
+                    <Input prefix={<UserOutlined />} placeholder="아이디" size="large" />
                   </Form.Item>
                   <Form.Item name="password" rules={[{ required: true, message: '비밀번호를 입력하세요.' }]}>
                     <Input.Password prefix={<LockOutlined />} placeholder="비밀번호" size="large" />

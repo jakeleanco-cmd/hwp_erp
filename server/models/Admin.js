@@ -6,12 +6,11 @@ const mongoose = require('mongoose');
  */
 const adminSchema = new mongoose.Schema(
   {
-    email: { 
+    adminId: { 
       type: String, 
       required: true, 
       unique: true, 
-      trim: true, 
-      lowercase: true 
+      trim: true
     },
     passwordHash: { 
       type: String, 

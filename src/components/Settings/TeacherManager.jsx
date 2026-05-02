@@ -4,7 +4,7 @@ import { UserAddOutlined, TeamOutlined, DeleteOutlined, StopOutlined, CheckCircl
 import axios from 'axios';
 
 const TeacherManager = () => {
-  const [teachers, setTeachers] = [useState([]), useState(false)];
+  const [teachersList, setTeachersList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -13,9 +13,6 @@ const TeacherManager = () => {
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
   const [permForm] = Form.useForm();
-  
-  // 상태관리가 한줄에 묶여있어 버그가 날 수 있으므로 분리합니다.
-  const [teachersList, setTeachersList] = useState([]);
 
   useEffect(() => {
     fetchTeachers();
@@ -274,7 +271,7 @@ const TeacherManager = () => {
             <Checkbox>수식 편집기</Checkbox>
           </Form.Item>
           <Form.Item name={['permissions', 'canManageQuestionBank']} valuePropName="checked" initialValue={true}>
-            <Checkbox>문제 은행 관리</Checkbox>
+            <Checkbox>시험지 관리</Checkbox>
           </Form.Item>
         </Form>
       </Modal>
@@ -305,6 +302,7 @@ const TeacherManager = () => {
           <Form.Item
             name="teacherId"
             label="접속 아이디"
+            extra="아이디 변경 시 선생님이 기존 아이디로 로그인할 수 없게 되므로 주의하세요."
             rules={[
               { required: true, message: '접속 아이디를 입력해주세요.' },
               { min: 4, message: '아이디는 4자 이상이어야 합니다.' }
@@ -349,7 +347,7 @@ const TeacherManager = () => {
             <Checkbox>수식 편집기 사용 권한</Checkbox>
           </Form.Item>
           <Form.Item name="canManageQuestionBank" valuePropName="checked">
-            <Checkbox>문제 은행 관리 권한</Checkbox>
+            <Checkbox>시험지 관리 권한</Checkbox>
           </Form.Item>
         </Form>
       </Modal>
