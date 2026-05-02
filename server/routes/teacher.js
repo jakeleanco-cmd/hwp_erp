@@ -100,6 +100,46 @@ router.patch('/:id/toggle-status', requireAuth, async (req, res) => {
   }
 });
 
+// 선생님 정보 수정 (관리자 전용)
+router.patch('/:id', requireAuth, async (req, res) => {
+  try {
+    const { teacherId, password, name, subject } = req.body;
+    const teacher = await Teacher.findById(req.params.id);
+
+    if (!teacher) {
+      return res.status(404).json({ message: '선생님을 찾을 수 없습니다.' });
+    }
+
+    // 아이디가 변경되는 경우 중복 확인
+    if (teacherId && teacherId !== teacher.teacherId) {
+      const existing = await Teacher.findOne({ teacherId });
+      if (existing) {
+        return res.status(400).json({ message: '이미 사용 중인 아이디입니다.' });
+      }
+      teacher.teacherId = teacherId;
+    }
+
+    if (name) teacher.name = name;
+    if (subject) teacher.subject = subject;
+
+    // 비밀번호가 입력된 경우에만 해싱하여 업데이트
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      teacher.passwordHash = await bcrypt.hash(password, salt);
+    }
+
+    await teacher.save();
+
+    const teacherData = teacher.toObject();
+    delete teacherData.passwordHash;
+
+    res.json({ message: '선생님 정보가 수정되었습니다.', teacher: teacherData });
+  } catch (error) {
+    console.error('Teacher update error:', error);
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+  }
+});
+
 // 선생님 계정 삭제
 router.delete('/:id', requireAuth, async (req, res) => {
   try {

@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Table, Space, Tag, Modal, Form, Input, message, Popconfirm, Checkbox, Divider } from 'antd';
-import { UserAddOutlined, TeamOutlined, DeleteOutlined, StopOutlined, CheckCircleOutlined, SettingOutlined } from '@ant-design/icons';
+import { UserAddOutlined, TeamOutlined, DeleteOutlined, StopOutlined, CheckCircleOutlined, SettingOutlined, EditOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
 const TeacherManager = () => {
   const [teachers, setTeachers] = [useState([]), useState(false)];
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isPermModalVisible, setIsPermModalVisible] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
   const [permForm] = Form.useForm();
   
   // 상태관리가 한줄에 묶여있어 버그가 날 수 있으므로 분리합니다.
@@ -43,6 +45,18 @@ const TeacherManager = () => {
     }
   };
 
+  const handleEditTeacher = async (values) => {
+    try {
+      await axios.patch(`/api/teachers/${selectedTeacher._id}`, values);
+      message.success('선생님 정보가 수정되었습니다.');
+      setIsEditModalVisible(false);
+      editForm.resetFields();
+      fetchTeachers();
+    } catch (error) {
+      message.error(error.response?.data?.message || '정보 수정에 실패했습니다.');
+    }
+  };
+
   const handleToggleStatus = async (id) => {
     try {
       await axios.patch(`/api/teachers/${id}/toggle-status`);
@@ -51,6 +65,17 @@ const TeacherManager = () => {
     } catch (error) {
       message.error('상태 변경에 실패했습니다.');
     }
+  };
+
+  const handleOpenEdit = (record) => {
+    setSelectedTeacher(record);
+    editForm.setFieldsValue({
+      name: record.name,
+      teacherId: record.teacherId,
+      subject: record.subject,
+      password: '', // 비밀번호는 보안상 비워둠
+    });
+    setIsEditModalVisible(true);
   };
 
   const handleOpenPermissions = (record) => {
@@ -124,6 +149,14 @@ const TeacherManager = () => {
       key: 'action',
       render: (_, record) => (
         <Space size="small">
+          <Button 
+            type="text" 
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => handleOpenEdit(record)}
+          >
+            수정
+          </Button>
           <Button 
             type="text" 
             size="small"
@@ -242,6 +275,56 @@ const TeacherManager = () => {
           </Form.Item>
           <Form.Item name={['permissions', 'canManageQuestionBank']} valuePropName="checked" initialValue={true}>
             <Checkbox>문제 은행 관리</Checkbox>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="선생님 정보 수정"
+        open={isEditModalVisible}
+        onCancel={() => {
+          setIsEditModalVisible(false);
+          editForm.resetFields();
+        }}
+        onOk={() => editForm.submit()}
+        okText="수정 완료"
+        cancelText="취소"
+      >
+        <Form
+          form={editForm}
+          layout="vertical"
+          onFinish={handleEditTeacher}
+        >
+          <Form.Item
+            name="name"
+            label="이름"
+            rules={[{ required: true, message: '선생님 이름을 입력해주세요.' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="teacherId"
+            label="접속 아이디"
+            rules={[
+              { required: true, message: '접속 아이디를 입력해주세요.' },
+              { min: 4, message: '아이디는 4자 이상이어야 합니다.' }
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="password"
+            label="비밀번호 변경"
+            extra="변경 시에만 입력하세요. 비워두면 기존 비밀번호가 유지됩니다."
+            rules={[{ min: 4, message: '비밀번호는 4자 이상이어야 합니다.' }]}
+          >
+            <Input.Password placeholder="새 비밀번호 (선택 사항)" />
+          </Form.Item>
+          <Form.Item
+            name="subject"
+            label="담당 과목"
+          >
+            <Input />
           </Form.Item>
         </Form>
       </Modal>
