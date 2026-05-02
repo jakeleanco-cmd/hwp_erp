@@ -50,6 +50,12 @@ const ExamList = ({ onCreateNew, onEditExam, onViewExam }) => {
       render: (count) => <Tag color="blue">{count}문항</Tag>,
     },
     {
+      title: '작성자',
+      dataIndex: 'authorName',
+      key: 'authorName',
+      render: (text) => text ? <Tag color="geekblue">{text}</Tag> : <Tag color="default">공용/관리자</Tag>,
+    },
+    {
       title: '생성일',
       dataIndex: 'createdAt',
       key: 'createdAt',

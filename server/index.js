@@ -58,7 +58,16 @@ app.post('/api/questions/batch', requireAuth, async (req, res) => {
 // Routes - Exams
 app.get('/api/exams', requireAuth, async (req, res) => {
   try {
-    const exams = await Exam.find().sort({ createdAt: -1 });
+    let filter = {};
+    if (req.user && req.user.role === 'teacher') {
+      filter = {
+        $or: [
+          { createdBy: req.user.sub },
+          { createdBy: { $exists: false } }
+        ]
+      };
+    }
+    const exams = await Exam.find(filter).sort({ createdAt: -1 });
     res.json(exams);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -77,7 +86,12 @@ app.get('/api/exams/:id', requireAuth, async (req, res) => {
 
 app.post('/api/exams', requireAuth, async (req, res) => {
   try {
-    const newExam = new Exam(req.body);
+    const examData = req.body;
+    if (req.user) {
+      examData.createdBy = req.user.sub;
+      examData.authorName = req.user.name;
+    }
+    const newExam = new Exam(examData);
     await newExam.save();
     res.status(201).json(newExam);
   } catch (err) {
@@ -87,6 +101,15 @@ app.post('/api/exams', requireAuth, async (req, res) => {
 
 app.put('/api/exams/:id', requireAuth, async (req, res) => {
   try {
+    const exam = await Exam.findById(req.params.id);
+    if (!exam) return res.status(404).json({ error: 'Exam not found' });
+
+    if (req.user && req.user.role === 'teacher') {
+      if (exam.createdBy && exam.createdBy.toString() !== req.user.sub) {
+        return res.status(403).json({ error: '수정 권한이 없습니다.' });
+      }
+    }
+
     const updatedExam = await Exam.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' });
     res.json(updatedExam);
   } catch (err) {
@@ -97,6 +120,14 @@ app.put('/api/exams/:id', requireAuth, async (req, res) => {
 app.delete('/api/exams/:id', requireAuth, async (req, res) => {
   try {
     const exam = await Exam.findById(req.params.id);
+    if (!exam) return res.status(404).json({ error: 'Exam not found' });
+
+    if (req.user && req.user.role === 'teacher') {
+      if (exam.createdBy && exam.createdBy.toString() !== req.user.sub) {
+        return res.status(403).json({ error: '삭제 권한이 없습니다.' });
+      }
+    }
+
     if (exam) {
       // 모든 문항의 내용과 해설에서 구글 드라이브 이미지 ID 추출
       const fileIds = new Set();

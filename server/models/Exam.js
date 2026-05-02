@@ -11,6 +11,8 @@ const ExamSchema = new mongoose.Schema({
       answer: String
     }
   ],
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher', required: false },
+  authorName: { type: String, required: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
