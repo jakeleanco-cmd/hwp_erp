@@ -9,18 +9,18 @@ export const useAuthStore = create(
   persist(
     (set) => ({
       token: null,
-      admin: null,
+      user: null,
       
       /** 인증 정보 설정 */
-      setAuth: (token, admin) => set({ token, admin }),
+      setAuth: (token, user) => set({ token, user }),
       
-      /** 관리자 정보 업데이트 */
-      updateAdmin: (updatedAdmin) => set((state) => ({ 
-        admin: { ...state.admin, ...updatedAdmin } 
+      /** 유저 정보 업데이트 */
+      updateUser: (updatedUser) => set((state) => ({ 
+        user: { ...state.user, ...updatedUser } 
       })),
       
       /** 로그아웃 */
-      logout: () => set({ token: null, admin: null }),
+      logout: () => set({ token: null, user: null }),
       
       /** 인증 여부 확인 */
       isAuthenticated: () => !!useAuthStore.getState().token,

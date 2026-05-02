@@ -18,6 +18,7 @@ import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
 import QuestionBankManager from './components/QuestionBank/QuestionBankManager';
 import GoogleDriveSettings from './components/Settings/GoogleDriveSettings';
+import TeacherManager from './components/Settings/TeacherManager';
 import LoginPage from './pages/LoginPage';
 import PrivateRoute from './components/auth/PrivateRoute';
 import { useAuthStore } from './store/authStore';
@@ -44,7 +45,7 @@ function MainLayout() {
   const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
-  const { admin, logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
 
   const mathAgent = new MathAgent();
   const parserAgent = new HwpParserAgent();
@@ -209,6 +210,7 @@ function MainLayout() {
         return (
           <div className="max-w-4xl mx-auto">
             <GoogleDriveSettings />
+            <TeacherManager />
           </div>
         );
       default:
@@ -235,30 +237,34 @@ function MainLayout() {
           selectedKeys={[selectedKey]} 
           onClick={({ key }) => setSelectedKey(key)}
           items={[
-            {
+            // 1. 문제 가져오기 (admin 이거나 권한이 있을 때)
+            (user?.role === 'admin' || user?.permissions?.canImportHwp) && {
               key: '1',
               icon: <FileTextOutlined />,
               label: '문제 가져오기 (HWP)',
             },
-            {
+            // 2. 수식 편집기 (admin 이거나 권한이 있을 때)
+            (user?.role === 'admin' || user?.permissions?.canUseMathEditor) && {
               key: '2',
               icon: <FunctionOutlined />,
               label: '수식 편집기',
             },
-            {
+            // 3. 문제 은행 관리 (admin 이거나 권한이 있을 때)
+            (user?.role === 'admin' || user?.permissions?.canManageQuestionBank) && {
               key: '3',
               icon: <DatabaseOutlined />,
               label: '문제 은행 관리',
             },
-            {
+            // 4. 시스템 설정 (admin 전용)
+            user?.role === 'admin' && {
               type: 'divider',
             },
-            {
+            user?.role === 'admin' && {
               key: '4',
               icon: <SettingOutlined />,
               label: '시스템 설정',
             },
-          ]}
+          ].filter(Boolean)} // undefined나 false 인 항목 제거
         />
       </Sider>
       
@@ -290,7 +296,7 @@ function MainLayout() {
               }}
             >
               <Button type="text" icon={<UserOutlined />}>
-                {admin?.name || '관리자'} 님
+                {user?.name || '사용자'} 님 ({user?.role === 'admin' ? '관리자' : '선생님'})
               </Button>
             </Dropdown>
           </Space>

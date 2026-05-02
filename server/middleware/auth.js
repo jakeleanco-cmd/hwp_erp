@@ -22,7 +22,9 @@ const requireAuth = (req, res, next) => {
 
     const decoded = jwt.verify(token, secret);
     
-    // aca_erp 패턴에 따라 decoded.sub에 adminId가 담겨있다고 가정
+    // 역할(role) 기반 관리를 위해 전체 정보를 req.user에 저장
+    req.user = decoded;
+    // 하위 호환성을 위해 adminId 유지
     req.adminId = decoded.sub;
     next();
   } catch (err) {

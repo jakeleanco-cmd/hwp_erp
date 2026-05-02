@@ -28,6 +28,10 @@ mongoose.connect(MONGODB_URI)
 // Routes - Auth
 app.use('/api/auth', authRoutes);
 
+// Routes - Teacher Management
+const teacherRoutes = require('./routes/teacher');
+app.use('/api/teachers', teacherRoutes);
+
 // Routes - Google Drive Auth
 app.use('/api/google-drive', googleDriveRoutes);
 

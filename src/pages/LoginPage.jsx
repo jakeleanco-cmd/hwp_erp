@@ -12,7 +12,7 @@ const { Title, Text } = Typography;
  */
 const LoginPage = () => {
   const [hasAdmin, setHasAdmin] = useState(true);
-  const [activeTab, setActiveTab] = useState('login');
+  const [activeTab, setActiveTab] = useState('teacherLogin');
   const [findTab, setFindTab] = useState('findId');
   const [loading, setLoading] = useState(false);
   const setAuth = useAuthStore((state) => state.setAuth);
@@ -38,14 +38,30 @@ const LoginPage = () => {
     checkAdmin();
   }, []);
 
-  // 로그인 처리
+  // 관리자 로그인 처리
   const onLogin = async (values) => {
     setLoading(true);
     try {
       const res = await axios.post('/api/auth/login', values);
-      const { token, admin } = res.data;
-      setAuth(token, admin);
-      message.success(`${admin.name}님, 환영합니다!`);
+      const { token, user } = res.data;
+      setAuth(token, user);
+      message.success(`${user.name}님(관리자), 환영합니다!`);
+      navigate(from, { replace: true });
+    } catch (err) {
+      message.error(err.response?.data?.message || '로그인에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 선생님 로그인 처리
+  const onTeacherLogin = async (values) => {
+    setLoading(true);
+    try {
+      const res = await axios.post('/api/auth/teacher-login', values);
+      const { token, user } = res.data;
+      setAuth(token, user);
+      message.success(`${user.name} 선생님, 환영합니다!`);
       navigate(from, { replace: true });
     } catch (err) {
       message.error(err.response?.data?.message || '로그인에 실패했습니다.');
@@ -59,8 +75,8 @@ const LoginPage = () => {
     setLoading(true);
     try {
       const res = await axios.post('/api/auth/register-first', values);
-      const { token, admin } = res.data;
-      setAuth(token, admin);
+      const { token, user } = res.data;
+      setAuth(token, user);
       message.success('관리자 등록 및 로그인이 완료되었습니다!');
       navigate('/');
     } catch (err) {
@@ -127,8 +143,28 @@ const LoginPage = () => {
           onChange={(key) => setActiveTab(key)}
           items={[
             {
-              key: 'login',
-              label: '로그인',
+              key: 'teacherLogin',
+              label: '선생님 로그인',
+              disabled: !hasAdmin,
+              children: (
+                <Form onFinish={onTeacherLogin} layout="vertical">
+                  <Form.Item name="teacherId" rules={[{ required: true, message: '아이디를 입력하세요.' }]}>
+                    <Input prefix={<UserOutlined />} placeholder="접속 아이디" size="large" />
+                  </Form.Item>
+                  <Form.Item name="password" rules={[{ required: true, message: '비밀번호를 입력하세요.' }]}>
+                    <Input.Password prefix={<LockOutlined />} placeholder="비밀번호" size="large" />
+                  </Form.Item>
+                  <Form.Item>
+                    <Button type="primary" htmlType="submit" block size="large" loading={loading} style={{ background: '#52c41a' }}>
+                      선생님 로그인
+                    </Button>
+                  </Form.Item>
+                </Form>
+              )
+            },
+            {
+              key: 'adminLogin',
+              label: '관리자 로그인',
               disabled: !hasAdmin,
               children: (
                 <Form onFinish={onLogin} layout="vertical">
@@ -145,7 +181,7 @@ const LoginPage = () => {
                   </Form.Item>
                   <div style={{ textAlign: 'center', marginTop: 10 }}>
                     <Button type="link" onClick={() => setActiveTab('find')}>
-                      아이디/비밀번호 찾기
+                      관리자 계정 찾기
                     </Button>
                   </div>
                 </Form>

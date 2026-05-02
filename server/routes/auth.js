@@ -9,14 +9,14 @@ const router = express.Router();
 /**
  * JWT 서명 함수
  */
-function signToken(adminId) {
+function signToken(userId, role = 'admin', permissions = {}) {
   const secret = process.env.JWT_SECRET;
   if (!secret || String(secret).trim() === '') {
     const e = new Error('JWT_SECRET_NOT_SET');
     e.code = 'JWT_SECRET_NOT_SET';
     throw e;
   }
-  return jwt.sign({ sub: adminId }, secret, { expiresIn: '7d' });
+  return jwt.sign({ sub: userId, role, permissions }, secret, { expiresIn: '7d' });
 }
 
 /**
@@ -71,10 +71,11 @@ router.post('/register-first', async (req, res) => {
     const token = signToken(admin._id.toString());
     return res.status(201).json({
       token,
-      admin: { 
+      user: { 
         id: admin._id, 
         email: admin.email, 
         name: admin.name,
+        role: 'admin',
         examViewerSettings: admin.examViewerSettings 
       },
     });
@@ -104,15 +105,57 @@ router.post('/login', async (req, res) => {
     const token = signToken(admin._id.toString());
     return res.json({
       token,
-      admin: { 
+      user: { 
         id: admin._id, 
         email: admin.email, 
         name: admin.name,
+        role: 'admin',
         examViewerSettings: admin.examViewerSettings 
       },
     });
   } catch (err) {
     return handleAuthError(res, err, '로그인 처리 중 오류가 발생했습니다.');
+  }
+});
+
+/** 선생님 로그인 */
+const Teacher = require('../models/Teacher');
+
+router.post('/teacher-login', async (req, res) => {
+  try {
+    const { teacherId, password } = req.body;
+    if (!teacherId || !password) {
+      return res.status(400).json({ message: '아이디와 비밀번호를 입력하세요.' });
+    }
+
+    const teacher = await Teacher.findOne({ teacherId: String(teacherId).trim() });
+    if (!teacher) {
+      return res.status(401).json({ message: '아이디 또는 비밀번호가 올바르지 않습니다.' });
+    }
+
+    if (!teacher.isActive) {
+      return res.status(403).json({ message: '계정이 정지되었습니다. 관리자에게 문의하세요.' });
+    }
+
+    const ok = await bcrypt.compare(password, teacher.passwordHash);
+    if (!ok) {
+      return res.status(401).json({ message: '아이디 또는 비밀번호가 올바르지 않습니다.' });
+    }
+
+    const token = signToken(teacher._id.toString(), 'teacher', teacher.permissions);
+    
+    return res.json({
+      token,
+      user: { 
+        id: teacher._id, 
+        teacherId: teacher.teacherId,
+        name: teacher.name,
+        role: 'teacher',
+        permissions: teacher.permissions
+      },
+    });
+  } catch (err) {
+    return handleAuthError(res, err, '선생님 로그인 처리 중 오류가 발생했습니다.');
   }
 });
 

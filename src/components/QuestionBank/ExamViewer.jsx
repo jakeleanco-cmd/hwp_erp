@@ -18,9 +18,9 @@ const { Title, Text } = Typography;
  *         → 이렇게 해야 빈 페이지가 삽입되지 않음
  */
 const ExamViewer = ({ exam, onBack }) => {
-  const { admin, updateAdmin } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const defaults = { showAnswers: false, columns: 2, questionSpacing: 50, itemsPerPage: 6 };
-  const saved = admin?.examViewerSettings || defaults;
+  const saved = user?.examViewerSettings || defaults;
 
   const [showAnswers, setShowAnswers] = useState(saved.showAnswers);
   const [columns, setColumns] = useState(saved.columns);
@@ -32,7 +32,7 @@ const ExamViewer = ({ exam, onBack }) => {
   // 설정 변경 시 Zustand → DB 동기화 (1초 디바운스)
   useEffect(() => {
     const s = { showAnswers, columns, questionSpacing, itemsPerPage };
-    updateAdmin({ examViewerSettings: s });
+    updateUser({ examViewerSettings: s });
     const t = setTimeout(() => {
       axios.put('/api/auth/settings', { settings: s }).catch(console.error);
     }, 1000);
