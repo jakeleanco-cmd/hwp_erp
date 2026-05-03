@@ -14,6 +14,8 @@ const QuestionManager = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
+  const [filterGrade, setFilterGrade] = useState('전체');
+  const [filterDifficulty, setFilterDifficulty] = useState('전체');
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -21,10 +23,14 @@ const QuestionManager = () => {
   const [editForm, setEditForm] = useState({ content: '', explanation: '', answer: '', tags: [], difficulty: '중', grade: '' });
   const [renameForm, setRenameForm] = useState({ oldTag: '', newTag: '' });
 
-  const fetchQuestions = async (searchVal = '') => {
+  const fetchQuestions = async (searchVal = '', grade = '전체', difficulty = '전체') => {
     setLoading(true);
     try {
-      const res = await axios.get(`/api/questions?search=${encodeURIComponent(searchVal || '')}`);
+      let url = `/api/questions?search=${encodeURIComponent(searchVal || '')}`;
+      if (grade && grade !== '전체') url += `&grade=${encodeURIComponent(grade)}`;
+      if (difficulty && difficulty !== '전체') url += `&difficulty=${encodeURIComponent(difficulty)}`;
+      
+      const res = await axios.get(url);
       setQuestions(res.data);
     } catch (err) {
       message.error('문항 목록을 불러오는 데 실패했습니다.');
@@ -33,13 +39,13 @@ const QuestionManager = () => {
     }
   };
 
-  // 실시간 검색 (Debounce 적용)
+  // 실시간 검색 및 필터 변경 시 데이터 호출
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchQuestions(search);
+      fetchQuestions(search, filterGrade, filterDifficulty);
     }, 300);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, filterGrade, filterDifficulty]);
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
@@ -270,12 +276,24 @@ const QuestionManager = () => {
             </Button>
           </Space>
           <Space>
+            <Select
+              value={filterGrade}
+              onChange={setFilterGrade}
+              style={{ width: 100 }}
+              options={[{ value: '전체', label: '모든 학년' }, ...GRADES]}
+            />
+            <Select
+              value={filterDifficulty}
+              onChange={setFilterDifficulty}
+              style={{ width: 100 }}
+              options={[{ value: '전체', label: '모든 난이도' }, ...DIFFICULTIES]}
+            />
             <Input
               placeholder="문항 내용, 정답, 해설, 태그 검색"
               prefix={<SearchOutlined />}
               value={search}
               onChange={handleSearchChange}
-              style={{ width: 300 }}
+              style={{ width: 250 }}
               allowClear
             />
             <Button 

@@ -7,12 +7,21 @@ const { requireAuth } = require('../middleware/auth');
 // GET /api/questions
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const { tag, search } = req.query;
+    const { tag, search, grade, difficulty } = req.query;
     let query = {};
     
     if (tag) {
       query.tags = tag;
     }
+
+    if (grade && grade !== '전체') {
+      query.grade = grade;
+    }
+
+    if (difficulty && difficulty !== '전체') {
+      query.difficulty = difficulty;
+    }
+
     if (search && search.trim()) {
       const trimmedSearch = search.trim();
       const keyword = trimmedSearch.replace(/\s+/g, '');
@@ -34,6 +43,7 @@ router.get('/', requireAuth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // POST /api/questions
 router.post('/', requireAuth, async (req, res) => {
