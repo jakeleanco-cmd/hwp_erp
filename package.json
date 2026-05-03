@@ -2,8 +2,7 @@
   "name": "hwp_erp",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
-  "main": "electron/main.js",
+  "main": "electron/main.mjs",
   "scripts": {
     "dev": "concurrently \"npm run vite:dev\" \"npm run electron:dev\" \"npm run server:dev\"",
     "web": "concurrently \"npm run vite:dev\" \"npm run server:dev\"",
