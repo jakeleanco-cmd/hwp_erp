@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Input, Button, Card, Typography, Tag, Space, message, Modal, Tooltip, Select } from 'antd';
-import { SearchOutlined, EditOutlined, DeleteOutlined, TagOutlined, EyeOutlined, PlusOutlined, PrinterOutlined } from '@ant-design/icons';
+import { SearchOutlined, EditOutlined, DeleteOutlined, TagOutlined, EyeOutlined, PlusOutlined, PrinterOutlined, FileOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import RichTextEditor from './RichTextEditor';
 import { GRADES, DIFFICULTIES, getDifficultyColor } from '../../constants';
@@ -165,6 +165,28 @@ const QuestionManager = () => {
     printWindow.document.close();
   };
 
+  const handleExportHwp = async (id) => {
+    try {
+      message.loading({ content: '문항 이미지 분석 및 문서 생성 중...', key: 'export_hwp', duration: 0 });
+      const response = await axios.get(`/api/export/questions/${id}/hwp`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `question_${id}.docx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      message.success({ content: '다운로드 완료! (한글에서 열어주세요)', key: 'export_hwp' });
+    } catch (err) {
+      console.error('Export error:', err);
+      message.error({ content: '문서 생성에 실패했습니다. (Gemini API 키 확인 필요)', key: 'export_hwp' });
+    }
+  };
+
   const columns = [
     {
       title: '문항 내용 (일부)',
@@ -247,6 +269,12 @@ const QuestionManager = () => {
               onClick={() => handleEdit(record)} 
             />
           </Tooltip>
+          <Tooltip title="한글(DOCX) 내보내기">
+            <Button 
+              icon={<FileOutlined />} 
+              onClick={() => handleExportHwp(record._id)} 
+            />
+          </Tooltip>
           <Tooltip title="삭제">
             <Button 
               danger 
@@ -327,6 +355,13 @@ const QuestionManager = () => {
             onClick={handlePrint}
           >
             인쇄하기
+          </Button>,
+          <Button 
+            key="export" 
+            icon={<FileOutlined />} 
+            onClick={() => handleExportHwp(selectedQuestion._id)}
+          >
+            한글(DOCX) 추출
           </Button>,
           <Button key="close" type="primary" onClick={() => setIsViewModalVisible(false)}>
             닫기

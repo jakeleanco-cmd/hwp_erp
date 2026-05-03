@@ -12,6 +12,7 @@ const teacherRoutes = require('./routes/teacher');
 const adminRoutes = require('./routes/admin');
 const examRoutes = require('./routes/exam');
 const questionRoutes = require('./routes/question');
+const exportRoutes = require('./routes/export');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -37,6 +38,7 @@ app.use('/api/admins', adminRoutes);
 app.use('/api/google-drive', googleDriveRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/questions', questionRoutes);
+app.use('/api/export', exportRoutes);
 
 // 서버 시작
 app.listen(PORT, () => {
