@@ -188,7 +188,8 @@ const QuestionManager = () => {
   };
 
   const handleShare = async (id) => {
-    const shareUrl = `${window.location.origin}/shared/question/${id}`;
+    // 로컬 환경에서 테스트하더라도 공유 링크는 항상 운영서버 주소로 생성되도록 고정
+    const shareUrl = `https://hwp-erp.vercel.app/shared/question/${id}`;
     try {
       await navigator.clipboard.writeText(shareUrl);
       message.success('공유 링크가 클립보드에 복사되었습니다.');
