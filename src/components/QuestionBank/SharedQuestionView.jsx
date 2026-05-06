@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { Card, Typography, Tag, Spin, Button, Result, Space } from 'antd';
-import { getDifficultyColor } from '../../../constants';
+import { getDifficultyColor } from '../../constants';
 import 'katex/dist/katex.min.css';
 
 const { Title, Text } = Typography;
