@@ -19,6 +19,7 @@ import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
 import QuestionBankManager from './components/QuestionBank/QuestionBankManager';
 import QuestionManager from './components/QuestionBank/QuestionManager';
+import SharedQuestionView from './components/QuestionBank/SharedQuestionView';
 import GoogleDriveSettings from './components/Settings/GoogleDriveSettings';
 import TeacherManager from './components/Settings/TeacherManager';
 import AdminManager from './components/Settings/AdminManager';
@@ -344,6 +345,7 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/shared/question/:id" element={<SharedQuestionView />} />
       <Route 
         path="/*" 
         element={

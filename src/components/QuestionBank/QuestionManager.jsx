@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Input, Button, Card, Typography, Tag, Space, message, Modal, Tooltip, Select } from 'antd';
-import { SearchOutlined, EditOutlined, DeleteOutlined, TagOutlined, EyeOutlined, PlusOutlined, PrinterOutlined, FileOutlined } from '@ant-design/icons';
+import { SearchOutlined, EditOutlined, DeleteOutlined, TagOutlined, EyeOutlined, PlusOutlined, PrinterOutlined, FileOutlined, ShareAltOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import RichTextEditor from './RichTextEditor';
 import { GRADES, DIFFICULTIES, getDifficultyColor } from '../../constants';
@@ -187,6 +187,27 @@ const QuestionManager = () => {
     }
   };
 
+  const handleShare = async (id) => {
+    const shareUrl = `${window.location.origin}/shared/question/${id}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      message.success('공유 링크가 클립보드에 복사되었습니다.');
+    } catch (err) {
+      // 일부 브라우저나 HTTP 환경에서 클립보드 API가 동작하지 않을 때의 폴백
+      const textArea = document.createElement("textarea");
+      textArea.value = shareUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        message.success('공유 링크가 클립보드에 복사되었습니다.');
+      } catch (e) {
+        message.error('링크 복사에 실패했습니다. 수동으로 복사해주세요: ' + shareUrl);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
   const columns = [
     {
       title: '문항 내용 (일부)',
@@ -261,6 +282,12 @@ const QuestionManager = () => {
                 setSelectedQuestion(record);
                 setIsViewModalVisible(true);
               }} 
+            />
+          </Tooltip>
+          <Tooltip title="외부 공유 링크 복사">
+            <Button 
+              icon={<ShareAltOutlined />} 
+              onClick={() => handleShare(record._id)} 
             />
           </Tooltip>
           <Tooltip title="수정">
