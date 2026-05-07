@@ -66,13 +66,10 @@ const SharedQuestionView = () => {
             </Space>
           </div>
 
-          <div style={{ marginBottom: '30px', fontSize: '16px', lineHeight: '1.8' }}>
+          <div style={{ marginBottom: '30px', fontSize: '18px', lineHeight: '1.8', color: '#262626' }}>
             <div 
               className="question-content"
               dangerouslySetInnerHTML={{ __html: question.content }} 
-              style={{
-                '& img': { maxWidth: '100%', height: 'auto', borderRadius: '4px' }
-              }}
             />
           </div>
 
@@ -88,25 +85,27 @@ const SharedQuestionView = () => {
           </div>
 
           {showAnswer && (
-            <div style={{ background: '#fafafa', padding: '20px', borderRadius: '8px', border: '1px solid #e8e8e8' }}>
+            <div style={{ background: '#f0f7ff', padding: '24px', borderRadius: '12px', border: '1px solid #bae7ff' }}>
               <div style={{ marginBottom: '20px' }}>
-                <Text strong style={{ fontSize: '18px', color: '#1890ff', display: 'block', marginBottom: '10px' }}>
+                <Text strong style={{ fontSize: '18px', color: '#0958d9', display: 'block', marginBottom: '12px' }}>
                   [정답]
                 </Text>
                 <div 
+                  className="question-content"
                   dangerouslySetInnerHTML={{ __html: question.answer }} 
-                  style={{ fontSize: '18px', fontWeight: 'bold' }}
+                  style={{ fontSize: '20px', fontWeight: '700', color: '#1d39c4' }}
                 />
               </div>
               
               {question.explanation && (
-                <div>
-                  <Text strong style={{ fontSize: '16px', color: '#595959', display: 'block', marginBottom: '10px' }}>
+                <div style={{ borderTop: '1px solid #d6e4ff', paddingTop: '20px' }}>
+                  <Text strong style={{ fontSize: '16px', color: '#595959', display: 'block', marginBottom: '12px' }}>
                     [해설]
                   </Text>
                   <div 
+                    className="question-content"
                     dangerouslySetInnerHTML={{ __html: question.explanation }} 
-                    style={{ fontSize: '15px', lineHeight: '1.8' }}
+                    style={{ fontSize: '16px', lineHeight: '1.8' }}
                   />
                 </div>
               )}

@@ -100,3 +100,12 @@ code {
   background-color: #eff6ff !important;
   color: #2563eb !important;
 }
+
+/* 문항 이미지 반응형 스타일 */
+.question-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 8px;
+  margin: 10px 0;
+  display: block;
+}
