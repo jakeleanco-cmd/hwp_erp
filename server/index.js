@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 
 // 환경 변수 로드 (.env 파일이 루트 디렉토리에 있으므로 경로 지정)
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(__dirname, '../.env'), quiet: true });
 
 const googleDriveRoutes = require('./routes/googleDriveRoutes');
 const authRoutes = require('./routes/auth.js');

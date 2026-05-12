@@ -7,13 +7,29 @@ const { requireAuth } = require('../middleware/auth');
 // GET /api/questions/public/:id (비인증 접근 허용)
 router.get('/public/:id', async (req, res) => {
   try {
-    const question = await Question.findById(req.params.id);
+    // 조회수 증가와 함께 문항 조회
+    const question = await Question.findByIdAndUpdate(
+      req.params.id, 
+      { $inc: { views: 1 } }, 
+      { new: true }
+    );
+    
     if (!question) {
       return res.status(404).json({ message: '문항을 찾을 수 없습니다.' });
     }
     res.json(question);
   } catch (err) {
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// POST /api/questions/:id/view (조회수 수동 증가 - 관리자 페이지용)
+router.post('/:id/view', async (req, res) => {
+  try {
+    await Question.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

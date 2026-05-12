@@ -12,6 +12,7 @@ const QuestionSchema = new mongoose.Schema({
   authorRole: { type: String, enum: ['Admin', 'Teacher'], default: 'Teacher' },
   authorName: { type: String, required: false },
   sourceExamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Exam', required: false },
+  views: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

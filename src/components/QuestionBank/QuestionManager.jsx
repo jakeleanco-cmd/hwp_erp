@@ -272,6 +272,14 @@ const QuestionManager = () => {
       render: (name) => <Tag color="geekblue">{name || '관리자'}</Tag>
     },
     {
+      title: '조회수',
+      dataIndex: 'views',
+      key: 'views',
+      width: '80px',
+      sorter: (a, b) => (a.views || 0) - (b.views || 0),
+      render: (views) => <Text type="secondary">{views || 0}</Text>
+    },
+    {
       title: '관리',
       key: 'action',
       render: (_, record) => (
@@ -282,6 +290,12 @@ const QuestionManager = () => {
               onClick={() => {
                 setSelectedQuestion(record);
                 setIsViewModalVisible(true);
+                // 조회수 증가 요청
+                axios.post(`/api/questions/${record._id}/view`).catch(console.error);
+                // 로컬 상태 업데이트 (실시간 반영)
+                setQuestions(prev => prev.map(q => 
+                  q._id === record._id ? { ...q, views: (q.views || 0) + 1 } : q
+                ));
               }} 
             />
           </Tooltip>
@@ -443,6 +457,12 @@ const QuestionManager = () => {
                   <Tag color="blue" key={tag}>{tag}</Tag>
                 ))}
               </Space>
+            </div>
+
+            <div style={{ marginTop: '16px' }}>
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                현재 조회수: {selectedQuestion.views || 0}회
+              </Text>
             </div>
           </div>
         )}
