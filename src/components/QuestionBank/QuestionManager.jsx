@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Input, Button, Card, Typography, Tag, Space, message, Modal, Tooltip, Select } from 'antd';
-import { SearchOutlined, EditOutlined, DeleteOutlined, TagOutlined, EyeOutlined, PlusOutlined, PrinterOutlined, FileOutlined, ShareAltOutlined } from '@ant-design/icons';
+import { SearchOutlined, EditOutlined, DeleteOutlined, TagOutlined, EyeOutlined, PlusOutlined, PrinterOutlined, FileOutlined, ShareAltOutlined, CommentOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import RichTextEditor from './RichTextEditor';
 import { GRADES, DIFFICULTIES, getDifficultyColor } from '../../constants';
@@ -209,6 +209,33 @@ const QuestionManager = () => {
     }
   };
 
+  const handleKakaoShare = (record) => {
+    const KAKAO_KEY = import.meta.env.VITE_KAKAO_JS_KEY;
+    if (!KAKAO_KEY) {
+      return message.error('카카오 JavaScript 키가 설정되지 않았습니다.');
+    }
+
+    if (!window.Kakao) {
+      return message.error('카카오 SDK를 불러오지 못했습니다.');
+    }
+
+    if (!window.Kakao.isInitialized()) {
+      window.Kakao.init(KAKAO_KEY);
+    }
+
+    const shareUrl = `https://hwp-erp.vercel.app/shared/question/${record._id}`;
+    
+    window.Kakao.Share.sendDefault({
+      objectType: 'text',
+      text: `[문항 공유] 학년: ${record.grade || '미지정'}, 난이도: ${record.difficulty || '중'}\n아래 링크에서 문제를 확인하세요.`,
+      link: {
+        mobileWebUrl: shareUrl,
+        webUrl: shareUrl,
+      },
+      buttonTitle: '문제 보기'
+    });
+  };
+
   const columns = [
     {
       title: '문항 내용 (일부)',
@@ -303,6 +330,13 @@ const QuestionManager = () => {
             <Button 
               icon={<ShareAltOutlined />} 
               onClick={() => handleShare(record._id)} 
+            />
+          </Tooltip>
+          <Tooltip title="카카오톡으로 공유">
+            <Button 
+              icon={<CommentOutlined />} 
+              onClick={() => handleKakaoShare(record)}
+              style={{ color: '#000', backgroundColor: '#FEE500', borderColor: '#FEE500' }}
             />
           </Tooltip>
           <Tooltip title="수정">

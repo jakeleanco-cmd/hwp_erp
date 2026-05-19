@@ -290,62 +290,100 @@ const ExamViewer = ({ exam, onBack }) => {
               )}
 
               {/* 문항 그리드 */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: columns === 2 ? '1fr 1fr' : '1fr',
-                gap: `0 40px`,
-                position: 'relative',
-                zIndex: 2,
-              }}>
-              {pageQuestions.map((q) => (
-                <div
-                  key={q.id}
-                  style={{
-                    marginBottom: questionSpacing,
-                    breakInside: 'avoid',
-                    pageBreakInside: 'avoid',
-                  }}
-                >
-                  <div style={{ display: 'flex', gap: 3 }}>
-                    <div style={{ fontSize: '14pt', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{q.id}.</div>
-                    <div style={{ flex: 1 }}>
-                      <div
-                        className="ql-editor"
-                        style={{ fontSize: '11.5pt', lineHeight: 1.6, padding: 0 }}
-                        dangerouslySetInnerHTML={{ __html: q.content }}
-                      />
+              {(() => {
+                /**
+                 * [2단 레이아웃 로직]
+                 * CSS Grid의 기본 흐름은 행 우선(row-first)이라 1→2, 3→4 식으로 좌우 교대 배치됨.
+                 * 우리가 원하는 것은 열 우선(column-first): 왼쪽 단을 먼저 순서대로 채운 뒤 오른쪽 단으로 넘김.
+                 * → 문항 배열을 절반으로 분할하여 두 개의 독립 컬럼으로 렌더링.
+                 */
+                const renderQuestion = (q) => (
+                  <div
+                    key={q.id}
+                    style={{
+                      marginBottom: questionSpacing,
+                      breakInside: 'avoid',
+                      pageBreakInside: 'avoid',
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: 3 }}>
+                      <div style={{ fontSize: '14pt', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{q.id}.</div>
+                      <div style={{ flex: 1 }}>
+                        <div
+                          className="ql-editor"
+                          style={{ fontSize: '11.5pt', lineHeight: 1.6, padding: 0 }}
+                          dangerouslySetInnerHTML={{ __html: q.content }}
+                        />
 
-                      {showAnswers && (q.answer || q.explanation) && (
-                        <div style={{
-                          marginTop: 8, padding: 8,
-                          background: '#f9fafb',
-                          border: '1px solid #fecaca',
-                          borderRadius: 6,
-                          fontSize: '10pt',
-                        }}>
-                          {q.answer && (
-                            <div style={{ marginBottom: 4 }}>
-                              <Text type="danger" strong>정답: </Text>
-                              <Text>{q.answer}</Text>
-                            </div>
-                          )}
-                          {q.explanation && (
-                            <div style={{ color: '#4b5563' }}>
-                              <Text type="danger" strong>해설:</Text>
-                              <div
-                                className="ql-editor"
-                                style={{ fontSize: '10pt', padding: 0, marginTop: 4 }}
-                                dangerouslySetInnerHTML={{ __html: q.explanation }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
+                        {showAnswers && (q.answer || q.explanation) && (
+                          <div style={{
+                            marginTop: 8, padding: 8,
+                            background: '#f9fafb',
+                            border: '1px solid #fecaca',
+                            borderRadius: 6,
+                            fontSize: '10pt',
+                          }}>
+                            {q.answer && (
+                              <div style={{ marginBottom: 4 }}>
+                                <Text type="danger" strong>정답: </Text>
+                                <Text>{q.answer}</Text>
+                              </div>
+                            )}
+                            {q.explanation && (
+                              <div style={{ color: '#4b5563' }}>
+                                <Text type="danger" strong>해설:</Text>
+                                <div
+                                  className="ql-editor"
+                                  style={{ fontSize: '10pt', padding: 0, marginTop: 4 }}
+                                  dangerouslySetInnerHTML={{ __html: q.explanation }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                );
+
+                if (columns === 2) {
+                  // 절반 기준으로 왼쪽/오른쪽 분할 (홀수면 왼쪽이 1개 더 많음)
+                  const half = Math.ceil(pageQuestions.length / 2);
+                  const leftCol = pageQuestions.slice(0, half);
+                  const rightCol = pageQuestions.slice(half);
+
+                  return (
+                    <div style={{
+                      display: 'flex',
+                      gap: '40px',
+                      position: 'relative',
+                      zIndex: 2,
+                    }}>
+                      {/* 왼쪽 단 */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {leftCol.map(renderQuestion)}
+                      </div>
+                      {/* 오른쪽 단 */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {rightCol.map(renderQuestion)}
+                      </div>
+                    </div>
+                  );
+                }
+
+                // 1단 모드: 기존 방식 유지
+                return (
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr',
+                    gap: `0 40px`,
+                    position: 'relative',
+                    zIndex: 2,
+                  }}>
+                    {pageQuestions.map(renderQuestion)}
+                  </div>
+                );
+              })()}
             {/* ev-content 닫기 */}
             </div>
 
